@@ -1,4 +1,4 @@
-# KNICS_Jupyter_frontend
+#  KNICS_Jupyter_frontend
 
 [![Github Actions Status](https://github.com/ICTLearningSciences/KNICS_Jupyter_frontend/workflows/Build/badge.svg)](https://github.com/ICTLearningSciences/KNICS_Jupyter_frontend/actions/workflows/build.yml)
 A JupyterLab extension.
