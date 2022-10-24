@@ -7,12 +7,15 @@ import { ICodeCell, IError, IOutput, IStream, MultilineString,  } from '@jupyter
 import { INotebookTracker, KernelError, Notebook, NotebookActions, NotebookPanel } from '@jupyterlab/notebook';
 import { UUID } from '@lumino/coreutils';
 import { Dexie } from 'dexie';
+import axios from 'axios';
 
 const NOTEBOOK_OPENED_EVENT = "NOTEBOOK_OPENED";
 const CELL_SELECTED_EVENT = "CELL_SELECTED";
 const NOTEBOOK_MODIFIED_EVENT = "NOTEBOOK_MODIFIED";
 const CELL_EXECUTION_BEGIN_EVENT = "CELL_EXECUTION_BEGIN";
 const CELL_EXECUTED_END_EVENT = "CELL_EXECUTION_END";
+
+const SERVER_ENDPOINT="http://localhost:8888";
 
 interface CellData {
   cellId: string;
@@ -129,6 +132,7 @@ async function onCellExecutionBegin(emitter:any, args:{notebook:Notebook, cell: 
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       data:JSON.stringify(event, null, 2),
     });
+    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
   }
 }
 
@@ -177,6 +181,8 @@ async function onCellExecutionEnded(emitter:any, args:{ notebook: Notebook; cell
       eventName: CELL_EXECUTED_END_EVENT,
       data:JSON.stringify(event, null, 2),
     });
+
+    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
   }
 }
 
@@ -197,6 +203,7 @@ async function onWidgetAdded(emitter: INotebookTracker, args:NotebookPanel):Prom
 		eventName: NOTEBOOK_OPENED_EVENT,
     data:JSON.stringify(event, null, 2),
 	});
+  axios.post(SERVER_ENDPOINT, JSON.stringify(event));
 }
 
 async function onModelContentChanged(emitter:  Notebook): Promise<void>{
@@ -228,6 +235,7 @@ async function onModelContentChanged(emitter:  Notebook): Promise<void>{
       eventName: NOTEBOOK_MODIFIED_EVENT,
       data:JSON.stringify(event, null, 2),
     });
+    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
   }, 5000);
 }
 
@@ -251,6 +259,7 @@ async function logActiveCell(emitter: INotebookTracker, args:Cell<ICellModel> | 
       eventName: CELL_SELECTED_EVENT,
       data: JSON.stringify(event, null, 2),
     });
+    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
   }
 }
 
