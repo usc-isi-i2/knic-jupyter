@@ -132,7 +132,7 @@ async function onCellExecutionBegin(emitter:any, args:{notebook:Notebook, cell: 
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       data:JSON.stringify(event, null, 2),
     });
-    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
 }
 
@@ -182,7 +182,7 @@ async function onCellExecutionEnded(emitter:any, args:{ notebook: Notebook; cell
       data:JSON.stringify(event, null, 2),
     });
 
-    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
 }
 
@@ -203,7 +203,7 @@ async function onWidgetAdded(emitter: INotebookTracker, args:NotebookPanel):Prom
 		eventName: NOTEBOOK_OPENED_EVENT,
     data:JSON.stringify(event, null, 2),
 	});
-  axios.post(SERVER_ENDPOINT, JSON.stringify(event));
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
 }
 
 async function onModelContentChanged(emitter:  Notebook): Promise<void>{
@@ -235,7 +235,7 @@ async function onModelContentChanged(emitter:  Notebook): Promise<void>{
       eventName: NOTEBOOK_MODIFIED_EVENT,
       data:JSON.stringify(event, null, 2),
     });
-    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }, 5000);
 }
 
@@ -259,7 +259,7 @@ async function logActiveCell(emitter: INotebookTracker, args:Cell<ICellModel> | 
       eventName: CELL_SELECTED_EVENT,
       data: JSON.stringify(event, null, 2),
     });
-    axios.post(SERVER_ENDPOINT, JSON.stringify(event));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
 }
 
