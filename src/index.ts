@@ -14,6 +14,7 @@ const CELL_SELECTED_EVENT = "CELL_SELECTED";
 const NOTEBOOK_MODIFIED_EVENT = "NOTEBOOK_MODIFIED";
 const CELL_EXECUTION_BEGIN_EVENT = "CELL_EXECUTION_BEGIN";
 const CELL_EXECUTED_END_EVENT = "CELL_EXECUTION_END";
+const SPEECH_DETECTED = "SPEECH_DETECTED"
 
 const SERVER_ENDPOINT="http://localhost:8888";
 
@@ -32,6 +33,7 @@ interface ErrorData {
 
 interface EventData {
   notebookName: string;
+  location: string;
 }
 
 interface NotebookOpened extends EventData {}
@@ -42,6 +44,10 @@ interface CellSelected extends EventData {
 
 interface NotebookModified extends EventData {
   cells: CellData[];
+}
+
+interface SpeechDetected extends EventData{
+  transcript: string;
 }
 
 interface CellExecutionBegin extends EventData {
@@ -61,7 +67,65 @@ interface NotebookEvent {
   session: string;
   timestamp: string;
   eventName: string;
-  eventData: NotebookOpened| NotebookModified | CellExecutionBegin | CellExecutionEnded | CellSelected;
+  eventData: NotebookOpened| NotebookModified | CellExecutionBegin | CellExecutionEnded | CellSelected | SpeechDetected;
+}
+
+export interface IWindow extends Window {
+  webkitSpeechRecognition: any;
+}
+
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+let notebookNameStore = ""
+let errorConnecting = false
+
+/**
+ * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
+ */
+function setupPerpetualSpeechRecognition(){
+  const {webkitSpeechRecognition} : IWindow = <IWindow><unknown>window;
+  const recognition = new webkitSpeechRecognition();
+  recognition.continuous = true;
+  recognition.addEventListener('start', ()=>{
+    console.log("speech recognition has started")
+  })
+  recognition.addEventListener('error', (event: any) => {
+    errorConnecting = event.error !== "no-speech"
+    console.error("speech error occured", event)
+  })
+  recognition.addEventListener('end', (event: any) => {
+    console.log("Speech recognition service disconnected, attempting to reconnect.");
+    if(errorConnecting){
+      // unexpected error, wait then try to reconnect
+      delay(5000).then(()=>{
+        recognition.start();
+      })
+    }else{
+      recognition.start();
+    }
+  });
+  recognition.onresult = (res: any) =>{
+    const newTranscript: string = res.results[res.results.length-1][0].transcript;
+    const event: NotebookEvent = {
+      eventData: {
+        notebookName: notebookNameStore,
+        location: window.location.toString(),
+        transcript: newTranscript.trim()
+      },
+      eventName: SPEECH_DETECTED,
+      user: USER,
+      session: SESSION,
+      timestamp: new Date().toISOString(),
+    };
+
+    console.log(CELL_EXECUTION_BEGIN_EVENT);
+    console.log(JSON.stringify(event, null, 2));
+    db.table("logs").add({
+      eventName: CELL_EXECUTION_BEGIN_EVENT,
+      data:JSON.stringify(event, null, 2),
+    });
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+  }
+  recognition.start();
 }
 
 /**
@@ -84,6 +148,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
+    setupPerpetualSpeechRecognition();
   }
 };
 
@@ -118,6 +183,7 @@ async function onCellExecutionBegin(emitter:any, args:{notebook:Notebook, cell: 
       eventData: {
         cell: toCellData(args.cell.model),
         notebookName: parent.context.path,
+        location: window.location.toString(),
         executionCount: model.execution_count
       },
       eventName: CELL_EXECUTION_BEGIN_EVENT,
@@ -160,12 +226,13 @@ async function onCellExecutionEnded(emitter:any, args:{ notebook: Notebook; cell
         return (element as IStream).text;
       }
       else return [];
-    }).filter((value)=>{ return value != []});
+    }).filter((value)=>{ return value.length > 0});
 
     const event: NotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
         notebookName: parent.context.path,
+        location: window.location.toString(),
         output: outputs,
         executionCount: model.execution_count,
         errors: errors,
@@ -191,6 +258,7 @@ async function onWidgetAdded(emitter: INotebookTracker, args:NotebookPanel):Prom
   const event: NotebookEvent = {
     eventData: {
       notebookName: args.context.path,
+      location: window.location.toString(),
     },
     user: USER,
     session: SESSION,
@@ -222,6 +290,7 @@ async function onModelContentChanged(emitter:  Notebook): Promise<void>{
     const event: NotebookEvent = {
       eventData: {
         notebookName: parent.context.path,
+        location: window.location.toString(),
         cells: cells,
       },
       eventName:NOTEBOOK_MODIFIED_EVENT,
@@ -242,11 +311,13 @@ async function onModelContentChanged(emitter:  Notebook): Promise<void>{
 async function logActiveCell(emitter: INotebookTracker, args:Cell<ICellModel> | null):Promise<void>
 {
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
+  notebookNameStore = parent.context.path
   if (args?.model){
     const event : NotebookEvent = {
       eventData: {
         cell: toCellData(args?.model),
         notebookName: parent.context.path,
+        location: window.location.toString(),
       },
       eventName: CELL_SELECTED_EVENT,
       user: USER,
