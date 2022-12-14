@@ -136,7 +136,6 @@ function setupPerpetualSpeechRecognition() {
       timestamp: new Date().toISOString()
     };
 
-    console.log(CELL_EXECUTION_BEGIN_EVENT);
     console.log(JSON.stringify(event, null, 2));
     db.table('logs').add({
       eventName: CELL_EXECUTION_BEGIN_EVENT,
