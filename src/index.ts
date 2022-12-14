@@ -3,20 +3,32 @@ import {
   JupyterFrontEndPlugin
 } from '@jupyterlab/application';
 import { Cell, ICellModel } from '@jupyterlab/cells';
-import { ICodeCell, IError, IOutput, IStream, MultilineString,  } from '@jupyterlab/nbformat';
-import { INotebookTracker, KernelError, Notebook, NotebookActions, NotebookPanel } from '@jupyterlab/notebook';
+import {
+  ICodeCell,
+  IError,
+  IOutput,
+  IStream,
+  MultilineString
+} from '@jupyterlab/nbformat';
+import {
+  INotebookTracker,
+  KernelError,
+  Notebook,
+  NotebookActions,
+  NotebookPanel
+} from '@jupyterlab/notebook';
 import { UUID } from '@lumino/coreutils';
 import { Dexie } from 'dexie';
 import axios from 'axios';
 
-const NOTEBOOK_OPENED_EVENT = "NOTEBOOK_OPENED";
-const CELL_SELECTED_EVENT = "CELL_SELECTED";
-const NOTEBOOK_MODIFIED_EVENT = "NOTEBOOK_MODIFIED";
-const CELL_EXECUTION_BEGIN_EVENT = "CELL_EXECUTION_BEGIN";
-const CELL_EXECUTED_END_EVENT = "CELL_EXECUTION_END";
-const SPEECH_DETECTED = "SPEECH_DETECTED"
+const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
+const CELL_SELECTED_EVENT = 'CELL_SELECTED';
+const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
+const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
+const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
+const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-const SERVER_ENDPOINT="http://localhost:8888";
+const SERVER_ENDPOINT = 'http://localhost:8888';
 
 interface CellData {
   cellId: string;
@@ -46,7 +58,7 @@ interface NotebookModified extends EventData {
   cells: CellData[];
 }
 
-interface SpeechDetected extends EventData{
+interface SpeechDetected extends EventData {
   transcript: string;
 }
 
@@ -67,7 +79,13 @@ interface NotebookEvent {
   session: string;
   timestamp: string;
   eventName: string;
-  eventData: NotebookOpened| NotebookModified | CellExecutionBegin | CellExecutionEnded | CellSelected | SpeechDetected;
+  eventData:
+    | NotebookOpened
+    | NotebookModified
+    | CellExecutionBegin
+    | CellExecutionEnded
+    | CellSelected
+    | SpeechDetected;
 }
 
 export interface IWindow extends Window {
@@ -75,36 +93,39 @@ export interface IWindow extends Window {
 }
 
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-let notebookNameStore = ""
-let errorConnecting = false
+let notebookNameStore = '';
+let errorConnecting = false;
 
 /**
  * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
  */
-function setupPerpetualSpeechRecognition(){
-  const {webkitSpeechRecognition} : IWindow = <IWindow><unknown>window;
+function setupPerpetualSpeechRecognition() {
+  const { webkitSpeechRecognition }: IWindow = <IWindow>(<unknown>window);
   const recognition = new webkitSpeechRecognition();
   recognition.continuous = true;
-  recognition.addEventListener('start', ()=>{
-    console.log("speech recognition has started")
-  })
+  recognition.addEventListener('start', () => {
+    console.log('speech recognition has started');
+  });
   recognition.addEventListener('error', (event: any) => {
-    errorConnecting = event.error !== "no-speech"
-    console.error("speech error occured", event)
-  })
+    errorConnecting = event.error !== 'no-speech';
+    console.error('speech error occured', event);
+  });
   recognition.addEventListener('end', (event: any) => {
-    console.log("Speech recognition service disconnected, attempting to reconnect.");
-    if(errorConnecting){
+    console.log(
+      'Speech recognition service disconnected, attempting to reconnect.'
+    );
+    if (errorConnecting) {
       // unexpected error, wait then try to reconnect
-      delay(5000).then(()=>{
+      delay(5000).then(() => {
         recognition.start();
-      })
-    }else{
+      });
+    } else {
       recognition.start();
     }
   });
-  recognition.onresult = (res: any) =>{
-    const newTranscript: string = res.results[res.results.length-1][0].transcript;
+  recognition.onresult = (res: any) => {
+    const newTranscript: string =
+      res.results[res.results.length - 1][0].transcript;
     const event: NotebookEvent = {
       eventData: {
         notebookName: notebookNameStore,
@@ -114,17 +135,17 @@ function setupPerpetualSpeechRecognition(){
       eventName: SPEECH_DETECTED,
       user: USER,
       session: SESSION,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
     console.log(CELL_EXECUTION_BEGIN_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    db.table("logs").add({
+    db.table('logs').add({
       eventName: CELL_EXECUTION_BEGIN_EVENT,
-      data:JSON.stringify(event, null, 2),
+      data: JSON.stringify(event, null, 2)
     });
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
-  }
+  };
   recognition.start();
 }
 
@@ -132,7 +153,7 @@ function setupPerpetualSpeechRecognition(){
  * Initialization data for the KNICS_Jupyter_frontend extension.
  */
 
-let db:Dexie;
+let db: Dexie;
 
 const USER = UUID.uuid4();
 const SESSION = UUID.uuid4();
@@ -141,7 +162,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   id: 'KNICS_Jupyter_frontend:plugin',
   autoStart: true,
   requires: [INotebookTracker],
-  activate: (app: JupyterFrontEnd, notebookTracker:INotebookTracker) => {
+  activate: (app: JupyterFrontEnd, notebookTracker: INotebookTracker) => {
     db = setupDB();
     console.log('JupyterLab extension KNICS_Jupyter_frontend is activated!');
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
@@ -152,14 +173,14 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout:number = 0;
+let timeout: number = 0;
 
-function setupDB():Dexie{
-  db = new Dexie("database");
+function setupDB(): Dexie {
+  db = new Dexie('database');
 
   db.version(1).stores({
-		logs: '++id, eventName, data',
-	});
+    logs: '++id, eventName, data'
+  });
 
   return db;
 }
@@ -169,16 +190,18 @@ function toCellData(cellModel: ICellModel): CellData {
     cellId: cellModel.id,
     type: cellModel.type,
     metadata: cellModel.metadata,
-    value: cellModel.value.text,
-  }
+    value: cellModel.value.text
+  };
 }
 
-async function onCellExecutionBegin(emitter:any, args:{notebook:Notebook, cell: Cell<ICellModel>}):Promise<void>
-{
+async function onCellExecutionBegin(
+  emitter: any,
+  args: { notebook: Notebook; cell: Cell<ICellModel> }
+): Promise<void> {
   const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
-  if (args?.cell.model && args.cell.model.type == 'code'){
+  if (args?.cell.model && args.cell.model.type == 'code') {
     const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
-    
+
     const event: NotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
@@ -189,44 +212,56 @@ async function onCellExecutionBegin(emitter:any, args:{notebook:Notebook, cell: 
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       user: USER,
       session: SESSION,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
 
     console.log(CELL_EXECUTION_BEGIN_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table("logs").add({
+    await db.table('logs').add({
       eventName: CELL_EXECUTION_BEGIN_EVENT,
-      data:JSON.stringify(event, null, 2),
+      data: JSON.stringify(event, null, 2)
     });
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
 }
 
-async function onCellExecutionEnded(emitter:any, args:{ notebook: Notebook; cell: Cell<ICellModel>;success: boolean; error?: KernelError | null  }):Promise<void>
-{
+async function onCellExecutionEnded(
+  emitter: any,
+  args: {
+    notebook: Notebook;
+    cell: Cell<ICellModel>;
+    success: boolean;
+    error?: KernelError | null;
+  }
+): Promise<void> {
   const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
-  if (args?.cell.model && args.cell.model.type == 'code'){
-    const model :ICodeCell = args.cell.model.toJSON() as ICodeCell;
-    const errors:ErrorData[] = model.outputs.map((element:IOutput):ErrorData => {
-      if(element.output_type == "error")
-      {
-        const error:IError = element as IError;
-        return {
-          errorName: error.ename,
-          errorText: error.evalue,
-          stackTrace: error.traceback,
+  if (args?.cell.model && args.cell.model.type == 'code') {
+    const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
+    const errors: ErrorData[] = model.outputs
+      .map((element: IOutput): ErrorData => {
+        if (element.output_type == 'error') {
+          const error: IError = element as IError;
+          return {
+            errorName: error.ename,
+            errorText: error.evalue,
+            stackTrace: error.traceback
+          };
         }
-      }
-      return {errorName:"", errorText: "", stackTrace:[]}
-    }).filter((value)=>{ return value.errorName != ""});
+        return { errorName: '', errorText: '', stackTrace: [] };
+      })
+      .filter(value => {
+        return value.errorName != '';
+      });
 
-    const outputs:MultilineString[] = model.outputs.map((element:IOutput)=>{
-      if(element.output_type == "stream")
-      {
-        return (element as IStream).text;
-      }
-      else return [];
-    }).filter((value)=>{ return value.length > 0});
+    const outputs: MultilineString[] = model.outputs
+      .map((element: IOutput) => {
+        if (element.output_type == 'stream') {
+          return (element as IStream).text;
+        } else return [];
+      })
+      .filter(value => {
+        return value.length > 0;
+      });
 
     const event: NotebookEvent = {
       eventData: {
@@ -235,54 +270,55 @@ async function onCellExecutionEnded(emitter:any, args:{ notebook: Notebook; cell
         location: window.location.toString(),
         output: outputs,
         executionCount: model.execution_count,
-        errors: errors,
+        errors: errors
       },
       eventName: CELL_EXECUTED_END_EVENT,
       session: SESSION,
       user: USER,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
     console.log(CELL_EXECUTED_END_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table("logs").add({
+    await db.table('logs').add({
       eventName: CELL_EXECUTED_END_EVENT,
-      data:JSON.stringify(event, null, 2),
+      data: JSON.stringify(event, null, 2)
     });
 
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
 }
 
-async function onWidgetAdded(emitter: INotebookTracker, args:NotebookPanel):Promise<void>{
+async function onWidgetAdded(
+  emitter: INotebookTracker,
+  args: NotebookPanel
+): Promise<void> {
   args.content.modelContentChanged.connect(onModelContentChanged);
   const event: NotebookEvent = {
     eventData: {
       notebookName: args.context.path,
-      location: window.location.toString(),
+      location: window.location.toString()
     },
     user: USER,
     session: SESSION,
     timestamp: new Date().toISOString(),
-    eventName: NOTEBOOK_OPENED_EVENT,
-  }
+    eventName: NOTEBOOK_OPENED_EVENT
+  };
   console.log(NOTEBOOK_OPENED_EVENT);
   console.log(JSON.stringify(event, null, 2));
-  await db.table("logs").add({
-		eventName: NOTEBOOK_OPENED_EVENT,
-    data:JSON.stringify(event, null, 2),
-	});
+  await db.table('logs').add({
+    eventName: NOTEBOOK_OPENED_EVENT,
+    data: JSON.stringify(event, null, 2)
+  });
   axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
 }
 
-async function onModelContentChanged(emitter:  Notebook): Promise<void>{
-  if(timeout)
-    clearTimeout(timeout)
+async function onModelContentChanged(emitter: Notebook): Promise<void> {
+  if (timeout) clearTimeout(timeout);
   timeout = setTimeout(async () => {
     const parent: NotebookPanel = emitter.parent as NotebookPanel;
     const cells: CellData[] = [];
-    if(emitter.model?.cells) {
-      for(let index = 0; index < emitter.model.cells.length; index++)
-      {
+    if (emitter.model?.cells) {
+      for (let index = 0; index < emitter.model.cells.length; index++) {
         const cellModel: ICellModel = emitter.model.cells.get(index);
         cells.push(toCellData(cellModel));
       }
@@ -291,44 +327,46 @@ async function onModelContentChanged(emitter:  Notebook): Promise<void>{
       eventData: {
         notebookName: parent.context.path,
         location: window.location.toString(),
-        cells: cells,
+        cells: cells
       },
-      eventName:NOTEBOOK_MODIFIED_EVENT,
+      eventName: NOTEBOOK_MODIFIED_EVENT,
       user: USER,
       session: SESSION,
-      timestamp: new Date().toISOString(),
+      timestamp: new Date().toISOString()
     };
     console.log(NOTEBOOK_MODIFIED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table("logs").add({
+    await db.table('logs').add({
       eventName: NOTEBOOK_MODIFIED_EVENT,
-      data:JSON.stringify(event, null, 2),
+      data: JSON.stringify(event, null, 2)
     });
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }, 5000);
 }
 
-async function logActiveCell(emitter: INotebookTracker, args:Cell<ICellModel> | null):Promise<void>
-{
+async function logActiveCell(
+  emitter: INotebookTracker,
+  args: Cell<ICellModel> | null
+): Promise<void> {
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
-  notebookNameStore = parent.context.path
-  if (args?.model){
-    const event : NotebookEvent = {
+  notebookNameStore = parent.context.path;
+  if (args?.model) {
+    const event: NotebookEvent = {
       eventData: {
         cell: toCellData(args?.model),
         notebookName: parent.context.path,
-        location: window.location.toString(),
+        location: window.location.toString()
       },
       eventName: CELL_SELECTED_EVENT,
       user: USER,
       session: SESSION,
-      timestamp: new Date().toISOString(), 
+      timestamp: new Date().toISOString()
     };
     console.log(CELL_SELECTED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table("logs").add({
+    await db.table('logs').add({
       eventName: CELL_SELECTED_EVENT,
-      data: JSON.stringify(event, null, 2),
+      data: JSON.stringify(event, null, 2)
     });
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
   }
