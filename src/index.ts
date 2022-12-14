@@ -30,62 +30,60 @@ const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
 const SERVER_ENDPOINT = 'http://localhost:8888';
 
-interface CellData {
+interface ICellData {
   cellId: string;
   type: string;
   value: string;
   metadata: any;
 }
 
-interface ErrorData {
+interface IErrorData {
   errorName: string;
   errorText: string;
   stackTrace: string[];
 }
 
-interface EventData {
+interface IEventData {
   notebookName: string;
   location: string;
 }
 
-interface NotebookOpened extends EventData {}
-
-interface CellSelected extends EventData {
-  cell: CellData;
+interface ICellSelected extends IEventData {
+  cell: ICellData;
 }
 
-interface NotebookModified extends EventData {
-  cells: CellData[];
+interface INotebookModified extends IEventData {
+  cells: ICellData[];
 }
 
-interface SpeechDetected extends EventData {
+interface ISpeechDetected extends IEventData {
   transcript: string;
 }
 
-interface CellExecutionBegin extends EventData {
-  cell: CellData;
-  executionCount: Number;
+interface ICellExecutionBegin extends IEventData {
+  cell: ICellData;
+  executionCount: number;
 }
 
-interface CellExecutionEnded extends EventData {
-  cell: CellData;
-  executionCount: Number | null;
+interface ICellExecutionEnded extends IEventData {
+  cell: ICellData;
+  executionCount: number | null;
   output: MultilineString[];
-  errors: ErrorData[];
+  errors: IErrorData[];
 }
 
-interface NotebookEvent {
+interface INotebookEvent {
   user: string;
   session: string;
   timestamp: string;
   eventName: string;
   eventData:
-    | NotebookOpened
-    | NotebookModified
-    | CellExecutionBegin
-    | CellExecutionEnded
-    | CellSelected
-    | SpeechDetected;
+    | IEventData
+    | INotebookModified
+    | ICellExecutionBegin
+    | ICellExecutionEnded
+    | ICellSelected
+    | ISpeechDetected;
 }
 
 export interface IWindow extends Window {
@@ -126,7 +124,7 @@ function setupPerpetualSpeechRecognition() {
   recognition.onresult = (res: any) => {
     const newTranscript: string =
       res.results[res.results.length - 1][0].transcript;
-    const event: NotebookEvent = {
+    const event: INotebookEvent = {
       eventData: {
         notebookName: notebookNameStore,
         location: window.location.toString(),
@@ -173,7 +171,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout: number = 0;
+let timeout = 0;
 
 function setupDB(): Dexie {
   db = new Dexie('database');
@@ -185,7 +183,7 @@ function setupDB(): Dexie {
   return db;
 }
 
-function toCellData(cellModel: ICellModel): CellData {
+function toCellData(cellModel: ICellModel): ICellData {
   return {
     cellId: cellModel.id,
     type: cellModel.type,
@@ -199,10 +197,10 @@ async function onCellExecutionBegin(
   args: { notebook: Notebook; cell: Cell<ICellModel> }
 ): Promise<void> {
   const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
-  if (args?.cell.model && args.cell.model.type == 'code') {
+  if (args?.cell.model && args.cell.model.type === 'code') {
     const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
 
-    const event: NotebookEvent = {
+    const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
         notebookName: parent.context.path,
@@ -235,11 +233,11 @@ async function onCellExecutionEnded(
   }
 ): Promise<void> {
   const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
-  if (args?.cell.model && args.cell.model.type == 'code') {
+  if (args?.cell.model && args.cell.model.type === 'code') {
     const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
-    const errors: ErrorData[] = model.outputs
-      .map((element: IOutput): ErrorData => {
-        if (element.output_type == 'error') {
+    const errors: IErrorData[] = model.outputs
+      .map((element: IOutput): IErrorData => {
+        if (element.output_type === 'error') {
           const error: IError = element as IError;
           return {
             errorName: error.ename,
@@ -250,20 +248,22 @@ async function onCellExecutionEnded(
         return { errorName: '', errorText: '', stackTrace: [] };
       })
       .filter(value => {
-        return value.errorName != '';
+        return value.errorName !== '';
       });
 
     const outputs: MultilineString[] = model.outputs
       .map((element: IOutput) => {
-        if (element.output_type == 'stream') {
+        if (element.output_type === 'stream') {
           return (element as IStream).text;
-        } else return [];
+        } else {
+          return [];
+        }
       })
       .filter(value => {
         return value.length > 0;
       });
 
-    const event: NotebookEvent = {
+    const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
         notebookName: parent.context.path,
@@ -293,7 +293,7 @@ async function onWidgetAdded(
   args: NotebookPanel
 ): Promise<void> {
   args.content.modelContentChanged.connect(onModelContentChanged);
-  const event: NotebookEvent = {
+  const event: INotebookEvent = {
     eventData: {
       notebookName: args.context.path,
       location: window.location.toString()
@@ -313,17 +313,19 @@ async function onWidgetAdded(
 }
 
 async function onModelContentChanged(emitter: Notebook): Promise<void> {
-  if (timeout) clearTimeout(timeout);
+  if (timeout) {
+    clearTimeout(timeout);
+  }
   timeout = setTimeout(async () => {
     const parent: NotebookPanel = emitter.parent as NotebookPanel;
-    const cells: CellData[] = [];
+    const cells: ICellData[] = [];
     if (emitter.model?.cells) {
       for (let index = 0; index < emitter.model.cells.length; index++) {
         const cellModel: ICellModel = emitter.model.cells.get(index);
         cells.push(toCellData(cellModel));
       }
     }
-    const event: NotebookEvent = {
+    const event: INotebookEvent = {
       eventData: {
         notebookName: parent.context.path,
         location: window.location.toString(),
@@ -351,7 +353,7 @@ async function logActiveCell(
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
   notebookNameStore = parent.context.path;
   if (args?.model) {
-    const event: NotebookEvent = {
+    const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args?.model),
         notebookName: parent.context.path,
