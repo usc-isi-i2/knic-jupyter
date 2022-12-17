@@ -28,7 +28,10 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-const SERVER_ENDPOINT = 'http://localhost:8888';
+// const SERVER_ENDPOINT = 'http://localhost:8888';
+
+const SERVER_ENDPOINT =
+  'http://localhost:5642/knic/user/b4384989-480b-4e0e-8fa4-c8cc548a7731/event';
 
 interface ICellData {
   cellId: string;
@@ -141,7 +144,9 @@ function setupPerpetualSpeechRecognition() {
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   };
   recognition.start();
 }
@@ -218,7 +223,9 @@ async function onCellExecutionBegin(
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -283,7 +290,9 @@ async function onCellExecutionEnded(
       data: JSON.stringify(event, null, 2)
     });
 
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -308,7 +317,9 @@ async function onWidgetAdded(
     eventName: NOTEBOOK_OPENED_EVENT,
     data: JSON.stringify(event, null, 2)
   });
-  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
 
 async function onModelContentChanged(emitter: Notebook): Promise<void> {
@@ -341,7 +352,9 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
       eventName: NOTEBOOK_MODIFIED_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }, 5000);
 }
 
@@ -369,7 +382,9 @@ async function logActiveCell(
       eventName: CELL_SELECTED_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
