@@ -28,7 +28,7 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-const SERVER_ENDPOINT = 'http://localhost:8888';
+const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:8888';
 
 interface ICellData {
   cellId: string;
@@ -176,7 +176,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout = 0;
+let timeout:NodeJS.Timeout | undefined = undefined;
 
 function setupDB(): Dexie {
   db = new Dexie('database');
