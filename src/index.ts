@@ -28,10 +28,9 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-// const SERVER_ENDPOINT = 'http://localhost:8888';
 
-const SERVER_ENDPOINT =
-  'http://localhost:5642/knic/user/b4384989-480b-4e0e-8fa4-c8cc548a7731/event';
+const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:5642/knic/user/b4384989-480b-4e0e-8fa4-c8cc548a7731/event';
+
 
 interface ICellData {
   cellId: string;
@@ -76,10 +75,12 @@ interface ICellExecutionEnded extends IEventData {
 }
 
 interface INotebookEvent {
-  user: string;
-  session: string;
+  user: string|null;
+  session: string|null;
   timestamp: string;
   eventName: string;
+  enumeration: number;
+  notebookSession: string;
   eventData:
     | IEventData
     | INotebookModified
@@ -133,6 +134,8 @@ function setupPerpetualSpeechRecognition() {
         location: window.location.toString(),
         transcript: newTranscript.trim()
       },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
       eventName: SPEECH_DETECTED,
       user: USER,
       session: SESSION,
@@ -157,8 +160,10 @@ function setupPerpetualSpeechRecognition() {
 
 let db: Dexie;
 
-const USER = UUID.uuid4();
-const SESSION = UUID.uuid4();
+const USER = new URLSearchParams(window.location.search).get("userid");
+const SESSION = new URLSearchParams(window.location.search).get("sessionid");
+let ENUMERATION = 0;
+let NOTEBOOK_SESSION = UUID.uuid4()
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'KNICS_Jupyter_frontend:plugin',
@@ -175,7 +180,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout = 0;
+let timeout:NodeJS.Timeout | undefined = undefined;
 
 function setupDB(): Dexie {
   db = new Dexie('database');
@@ -211,6 +216,8 @@ async function onCellExecutionBegin(
         location: window.location.toString(),
         executionCount: model.execution_count
       },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       user: USER,
       session: SESSION,
@@ -278,6 +285,8 @@ async function onCellExecutionEnded(
         executionCount: model.execution_count,
         errors: errors
       },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
       eventName: CELL_EXECUTED_END_EVENT,
       session: SESSION,
       user: USER,
@@ -301,6 +310,8 @@ async function onWidgetAdded(
   args: NotebookPanel
 ): Promise<void> {
   args.content.modelContentChanged.connect(onModelContentChanged);
+  ENUMERATION = 0;
+  NOTEBOOK_SESSION = UUID.uuid4();
   const event: INotebookEvent = {
     eventData: {
       notebookName: args.context.path,
@@ -308,6 +319,8 @@ async function onWidgetAdded(
     },
     user: USER,
     session: SESSION,
+    enumeration: ENUMERATION++,
+    notebookSession: NOTEBOOK_SESSION,
     timestamp: new Date().toISOString(),
     eventName: NOTEBOOK_OPENED_EVENT
   };
@@ -341,6 +354,8 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         location: window.location.toString(),
         cells: cells
       },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
       eventName: NOTEBOOK_MODIFIED_EVENT,
       user: USER,
       session: SESSION,
@@ -371,6 +386,8 @@ async function logActiveCell(
         notebookName: parent.context.path,
         location: window.location.toString()
       },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
       eventName: CELL_SELECTED_EVENT,
       user: USER,
       session: SESSION,
