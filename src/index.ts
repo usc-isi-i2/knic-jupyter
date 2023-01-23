@@ -28,10 +28,6 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-
-const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:5642/knic/user/b4384989-480b-4e0e-8fa4-c8cc548a7731/event';
-
-
 interface ICellData {
   cellId: string;
   type: string;
@@ -75,8 +71,8 @@ interface ICellExecutionEnded extends IEventData {
 }
 
 interface INotebookEvent {
-  user: string|null;
-  session: string|null;
+  user: string | null;
+  session: string | null;
   timestamp: string;
   eventName: string;
   enumeration: number;
@@ -160,10 +156,13 @@ function setupPerpetualSpeechRecognition() {
 
 let db: Dexie;
 
-const USER = new URLSearchParams(window.location.search).get("userid");
-const SESSION = new URLSearchParams(window.location.search).get("sessionid");
+const USER = new URLSearchParams(window.location.search).get('userid');
+const SESSION = new URLSearchParams(window.location.search).get('sessionid');
+const SERVER_ENDPOINT =
+  process.env.LOGGING_ENDPOINT ||
+  `http://localhost:5642/knic/user/${USER}/event`;
 let ENUMERATION = 0;
-let NOTEBOOK_SESSION = UUID.uuid4()
+let NOTEBOOK_SESSION = UUID.uuid4();
 
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'KNICS_Jupyter_frontend:plugin',
@@ -180,7 +179,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout:NodeJS.Timeout | undefined = undefined;
+let timeout: NodeJS.Timeout | undefined = undefined;
 
 function setupDB(): Dexie {
   db = new Dexie('database');
