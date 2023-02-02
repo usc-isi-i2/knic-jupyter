@@ -28,6 +28,9 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
+const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:8888';
+const USE_DEXIE =  new Boolean(process.env.USE_DEXIE) || false;
+
 interface ICellData {
   cellId: string;
   type: string;
@@ -169,7 +172,9 @@ const plugin: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, notebookTracker: INotebookTracker) => {
-    db = setupDB();
+    if (USE_DEXIE) {
+      db = setupDB();
+    }
     console.log('JupyterLab extension KNICS_Jupyter_frontend is activated!');
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
@@ -225,10 +230,12 @@ async function onCellExecutionBegin(
 
     console.log(CELL_EXECUTION_BEGIN_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table('logs').add({
-      eventName: CELL_EXECUTION_BEGIN_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
+    if (USE_DEXIE) {
+      await db.table('logs').add({
+       eventName: CELL_EXECUTION_BEGIN_EVENT,
+       data: JSON.stringify(event, null, 2)
+     });
+    }
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -293,10 +300,12 @@ async function onCellExecutionEnded(
     };
     console.log(CELL_EXECUTED_END_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table('logs').add({
-      eventName: CELL_EXECUTED_END_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
+    if (USE_DEXIE) {
+      await db.table('logs').add({
+        eventName: CELL_EXECUTED_END_EVENT,
+        data: JSON.stringify(event, null, 2)
+      });
+    }
 
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
@@ -325,10 +334,12 @@ async function onWidgetAdded(
   };
   console.log(NOTEBOOK_OPENED_EVENT);
   console.log(JSON.stringify(event, null, 2));
-  await db.table('logs').add({
-    eventName: NOTEBOOK_OPENED_EVENT,
-    data: JSON.stringify(event, null, 2)
-  });
+  if (USE_DEXIE) {
+    await db.table('logs').add({
+      eventName: NOTEBOOK_OPENED_EVENT,
+      data: JSON.stringify(event, null, 2)
+    });
+  }
   axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
     headers: { 'Content-Type': 'application/json' }
   });
@@ -362,10 +373,12 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
     };
     console.log(NOTEBOOK_MODIFIED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table('logs').add({
-      eventName: NOTEBOOK_MODIFIED_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
+    if (USE_DEXIE) {
+      await db.table('logs').add({
+        eventName: NOTEBOOK_MODIFIED_EVENT,
+        data: JSON.stringify(event, null, 2)
+      });
+    }
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -394,10 +407,12 @@ async function logActiveCell(
     };
     console.log(CELL_SELECTED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    await db.table('logs').add({
-      eventName: CELL_SELECTED_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
+    if (USE_DEXIE) {
+      await db.table('logs').add({
+        eventName: CELL_SELECTED_EVENT,
+        data: JSON.stringify(event, null, 2)
+      });
+    }
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
