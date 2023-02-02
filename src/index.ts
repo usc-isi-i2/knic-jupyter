@@ -28,7 +28,6 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:8888';
 const USE_DEXIE =  new Boolean(process.env.USE_DEXIE) || false;
 
 interface ICellData {
