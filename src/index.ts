@@ -21,6 +21,7 @@ import { UUID } from '@lumino/coreutils';
 import { Dexie } from 'dexie';
 import axios from 'axios';
 
+const JUPYTER_LOADED_EVENT = 'JUPYTER_LOADED';
 const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
 const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
@@ -45,6 +46,10 @@ interface IErrorData {
 
 interface IEventData {
   notebookName: string;
+  location: string;
+}
+
+interface IJupyterLoaded {
   location: string;
 }
 
@@ -81,6 +86,7 @@ interface INotebookEvent {
   notebookSession: string;
   eventData:
     | IEventData
+    | IJupyterLoaded
     | INotebookModified
     | ICellExecutionBegin
     | ICellExecutionEnded
@@ -175,6 +181,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
       db = setupDB();
     }
     console.log('JupyterLab extension KNICS_Jupyter_frontend is activated!');
+
+    // Log jupyter loaded event
+    onJupyterLoaded()
+
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
@@ -336,6 +346,31 @@ async function onWidgetAdded(
   if (USE_DEXIE) {
     await db.table('logs').add({
       eventName: NOTEBOOK_OPENED_EVENT,
+      data: JSON.stringify(event, null, 2)
+    });
+  }
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+async function onJupyterLoaded(): Promise<void> {
+  ENUMERATION = 0;
+  NOTEBOOK_SESSION = UUID.uuid4();
+  const event: INotebookEvent = {
+    eventData: {
+      location: window.location.toString()
+    },
+    user: USER,
+    session: SESSION,
+    enumeration: ENUMERATION++,
+    notebookSession: NOTEBOOK_SESSION,
+    timestamp: new Date().toISOString(),
+    eventName: JUPYTER_LOADED_EVENT
+  };
+  if (USE_DEXIE) {
+    await db.table('logs').add({
+      eventName: JUPYTER_LOADED_EVENT,
       data: JSON.stringify(event, null, 2)
     });
   }
