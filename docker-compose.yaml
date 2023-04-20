@@ -7,6 +7,8 @@ services:
     restart: always
     ports:
       - "5644:5644"
+    volumes:
+      - /data/knic-notebooks:/knic-jupyter/notebooks
     logging:
       options:
         max-size: "10m"
