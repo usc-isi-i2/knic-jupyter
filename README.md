@@ -61,10 +61,10 @@ By default, the `jlpm build` command generates the source maps for this extensio
 jupyter lab build --minimize=False
 ```
 
-### Running jupyter lab together with knic-engine and knic-companion
+### Running jupyter lab locally and together with knic-engine, knic-services and knic-companion
 
 ```bash
-jupyter lab --no-browser --ip='*' --NotebookApp.token='' --NotebookApp.password=''
+jupyter lab --allow-root --no-browser --ip='0.0.0.0' --port 5644 --IdentityProvider.token='' --ServerApp.password='' --ServerApp.allow_origin='*'
 ```
 
 ### Development uninstall
