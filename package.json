@@ -3,9 +3,8 @@
   "version": "0.1.0",
   "description": "A JupyterLab extension.",
   "keywords": [
-    "jupyter",
-    "jupyterlab",
-    "jupyterlab-extension"
+    "knic",
+    "jupyter"
   ],
   "homepage": "https://github.com/usc-isi-i2/knic-jupyter",
   "bugs": {
