@@ -1,7 +1,7 @@
 {
-  "name": "KNICS_Jupyter_frontend-ui-tests",
+  "name": "knic-jupyter-ui-tests",
   "version": "1.0.0",
-  "description": "JupyterLab KNICS_Jupyter_frontend Integration Tests",
+  "description": "JupyterLab Integration Tests for knic-jupyter",
   "private": true,
   "scripts": {
     "start": "jupyter lab --config jupyter_server_test_config.py",

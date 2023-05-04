@@ -159,7 +159,7 @@ function setupPerpetualSpeechRecognition() {
 }
 
 /**
- * Initialization data for the KNICS_Jupyter_frontend extension.
+ * Initialization data for knic-jupyter
  */
 
 let db: Dexie;
@@ -173,14 +173,14 @@ let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
 
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'KNICS_Jupyter_frontend:plugin',
+  id: 'knic-jupyter:plugin',
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, notebookTracker: INotebookTracker) => {
     if (USE_DEXIE) {
       db = setupDB();
     }
-    console.log('JupyterLab extension KNICS_Jupyter_frontend is activated!');
+    console.log('knic-jupyter is activated!');
 
     // Log jupyter loaded event
     onJupyterLoaded()
