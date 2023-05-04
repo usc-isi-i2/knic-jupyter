@@ -169,6 +169,9 @@ const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT =
   process.env.LOGGING_ENDPOINT ||
   `https://knic.isi.edu/engine/user/${USER}/event`;
+
+console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
+
 let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
 
