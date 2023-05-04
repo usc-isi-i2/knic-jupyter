@@ -9,7 +9,7 @@ include ts*.json
 include *.config.js
 include yarn.lock
 
-graft KNICS_Jupyter_frontend/labextension
+graft knic-jupyter/labextension
 
 # Javascript files
 graft src

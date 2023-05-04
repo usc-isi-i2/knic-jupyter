@@ -1,4 +1,4 @@
-# Making a new release of KNICS_Jupyter_frontend
+# Making a new release of knic-jupyter
 
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 

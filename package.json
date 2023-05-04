@@ -1,5 +1,5 @@
 {
-  "name": "KNICS_Jupyter_frontend",
+  "name": "knic-jupyter",
   "version": "0.1.0",
   "description": "A JupyterLab extension.",
   "keywords": [
@@ -7,15 +7,11 @@
     "jupyterlab",
     "jupyterlab-extension"
   ],
-  "homepage": "https://github.com/ICTLearningSciences/KNICS_Jupyter_frontend",
+  "homepage": "https://github.com/usc-isi-i2/knic-jupyter",
   "bugs": {
-    "url": "https://github.com/ICTLearningSciences/KNICS_Jupyter_frontend/issues"
+    "url": "https://github.com/usc-isi-i2/knic-jupyter/issues"
   },
   "license": "BSD-3-Clause",
-  "author": {
-    "name": "Daniel Auerbach",
-    "email": "auerbach@ict.usc.edu"
-  },
   "files": [
     "lib/**/*.{d.ts,eot,gif,html,jpg,js,js.map,json,png,svg,woff2,ttf}",
     "style/**/*.{css,js,eot,gif,html,jpg,json,png,svg,woff2,ttf}"
@@ -25,7 +21,7 @@
   "style": "style/index.css",
   "repository": {
     "type": "git",
-    "url": "https://github.com/ICTLearningSciences/KNICS_Jupyter_frontend.git"
+    "url": "https://github.com/usc-isi-i2/knic-jupyter.git"
   },
   "scripts": {
     "build": "jlpm build:lib && jlpm build:labextension:dev",
@@ -36,7 +32,7 @@
     "clean": "jlpm clean:lib",
     "clean:lib": "rimraf lib tsconfig.tsbuildinfo",
     "clean:lintcache": "rimraf .eslintcache .stylelintcache",
-    "clean:labextension": "rimraf KNICS_Jupyter_frontend/labextension",
+    "clean:labextension": "rimraf knic-jupyter/labextension",
     "clean:all": "jlpm clean:lib && jlpm clean:labextension && jlpm clean:lintcache",
     "eslint": "jlpm eslint:check --fix",
     "eslint:check": "eslint . --cache --ext .ts,.tsx",
@@ -94,7 +90,7 @@
   },
   "jupyterlab": {
     "extension": true,
-    "outputDir": "KNICS_Jupyter_frontend/labextension"
+    "outputDir": "knic-jupyter/labextension"
   },
   "jupyter-releaser": {
     "hooks": {

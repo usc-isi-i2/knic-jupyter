@@ -2,7 +2,7 @@ FROM python:3.8.15
 
 RUN mkdir /lab
 
-COPY KNICS_Jupyter_frontend /lab/KNICS_Jupyter_frontend
+COPY knic-jupyter /lab/knic-jupyter
 COPY requirements.txt /lab/requirements.txt
 COPY pyproject.toml /lab/pyproject.toml
 COPY package.json /lab/package.json

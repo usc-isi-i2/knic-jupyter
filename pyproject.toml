@@ -3,7 +3,7 @@ requires = ["hatchling>=1.3.1", "jupyterlab>=3.4.7,<4.0.0", "hatch-nodejs-versio
 build-backend = "hatchling.build"
 
 [project]
-name = "KNICS_Jupyter_frontend"
+name = "knic-jupyter"
 readme = "README.md"
 license = { file = "LICENSE" }
 requires-python = ">=3.7"
@@ -41,11 +41,11 @@ source = "nodejs"
 fields = ["description", "authors", "urls"]
 
 [tool.hatch.build]
-artifacts = ["KNICS_Jupyter_frontend/labextension"]
+artifacts = ["knic-jupyter/labextension"]
 
 [tool.hatch.build.targets.wheel.shared-data]
-"KNICS_Jupyter_frontend/labextension" = "share/jupyter/labextensions/KNICS_Jupyter_frontend"
-"install.json" = "share/jupyter/labextensions/KNICS_Jupyter_frontend/install.json"
+"knic-jupyter/labextension" = "share/jupyter/labextensions/knic-jupyter"
+"install.json" = "share/jupyter/labextensions/knic-jupyter/install.json"
 
 [tool.hatch.build.targets.sdist]
 exclude = [".github"]
@@ -54,10 +54,10 @@ exclude = [".github"]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
 ensured-targets = [
-    "KNICS_Jupyter_frontend/labextension/static/style.js",
-    "KNICS_Jupyter_frontend/labextension/package.json",
+    "knic-jupyter/labextension/static/style.js",
+    "knic-jupyter/labextension/package.json",
 ]
-skip-if-exists = ["KNICS_Jupyter_frontend/labextension/static/style.js"]
+skip-if-exists = ["knic-jupyter/labextension/static/style.js"]
 
 [tool.hatch.build.hooks.jupyter-builder.build-kwargs]
 build_cmd = "build:prod"
@@ -67,7 +67,7 @@ npm = ["jlpm"]
 build_cmd = "install:extension"
 npm = ["jlpm"]
 source_dir = "src"
-build_dir = "KNICS_Jupyter_frontend/labextension"
+build_dir = "knic-jupyter/labextension"
 
 [tool.jupyter-releaser.options]
 version_cmd = "hatch version"
