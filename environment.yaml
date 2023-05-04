@@ -129,7 +129,6 @@ dependencies:
       - editables==0.3
       - https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.5.0/en_core_web_sm-3.5.0.tar.gz#en_core_web_sm
       - hatchling==1.14.1
-      - knics-jupyter-frontend==0.1.0
       - langcodes==3.3.0
       - murmurhash==1.0.9
       - numpy==1.24.2
