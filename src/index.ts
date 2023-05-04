@@ -168,7 +168,7 @@ const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT =
   process.env.LOGGING_ENDPOINT ||
-  `http://localhost:5642/knic/user/${USER}/event`;
+  `https://knic.isi.edu/engine/user/${USER}/event`;
 let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
 
