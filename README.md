@@ -15,5 +15,5 @@ pip install -ve .
 ## Running the lab
 
 ```console
-jupyter lab --port 5644 --no-browser --IdentityProvider.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --allow-root
+./run-jupyter-lab.sh
 ```
