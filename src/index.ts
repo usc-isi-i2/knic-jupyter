@@ -166,11 +166,7 @@ let db: Dexie;
 
 const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
-
-let SERVER_ENDPOINT =
-  process.env.KNIC_ENGINE_URL ||
-  'https://knic.isi.edu/engine'
-SERVER_ENDPOINT += `/user/${USER}/event`;
+const SERVER_ENDPOINT = `https://knic.isi.edu/engine/user/${USER}/event`;
 
 console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
 
