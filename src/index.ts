@@ -21,6 +21,12 @@ import { UUID } from '@lumino/coreutils';
 import { Dexie } from 'dexie';
 import axios from 'axios';
 
+
+/**
+ * Supported Jupyter Lab events in knic-jupyter
+ */
+
+
 const JUPYTER_LOADED_EVENT = 'JUPYTER_LOADED';
 const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
 const CELL_SELECTED_EVENT = 'CELL_SELECTED';
@@ -29,7 +35,28 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
+
+/**
+ * Initialization data for knic-jupyter
+ */
+
+
 const USE_DEXIE =  new Boolean(process.env.USE_DEXIE) || false;
+
+let db: Dexie;
+
+const USER = new URLSearchParams(window.location.search).get('userid');
+const SESSION = new URLSearchParams(window.location.search).get('sessionid');
+const SERVER_ENDPOINT = `https://knic.isi.edu/engine/user/${USER}/event`;
+
+console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
+
+let ENUMERATION = 0;
+let NOTEBOOK_SESSION = UUID.uuid4();
+
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+let notebookNameStore = '';
+let errorConnecting = false;
 
 interface ICellData {
   cellId: string;
@@ -97,25 +124,6 @@ interface INotebookEvent {
 export interface IWindow extends Window {
   webkitSpeechRecognition: any;
 }
-
-/**
- * Initialization data for knic-jupyter
- */
-
-let db: Dexie;
-
-const USER = new URLSearchParams(window.location.search).get('userid');
-const SESSION = new URLSearchParams(window.location.search).get('sessionid');
-const SERVER_ENDPOINT = `https://knic.isi.edu/engine/user/${USER}/event`;
-
-console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
-
-let ENUMERATION = 0;
-let NOTEBOOK_SESSION = UUID.uuid4();
-
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-let notebookNameStore = '';
-let errorConnecting = false;
 
 /**
  * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
