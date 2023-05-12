@@ -10,6 +10,6 @@ config.ServerApp.allow_credentials = True # Set the Access-Control-Allow-Credent
 config.ServerApp.tornado_settings = {
     'headers': {
         'X-Frame-Options': 'ALLOW_FROM https://knic.isi.edu',
-        'Content-Security-Policy': "frame-ancestors 'self' http://localhost:5641",
+        'Content-Security-Policy': "frame-ancestors 'self' http://localhost:5641 https://knic.isi.edu",
     }
 }
