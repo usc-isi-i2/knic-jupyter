@@ -10,6 +10,6 @@ config.ServerApp.disable_check_xsrf = True # Disable XSRF checking in jupyter la
 config.ServerApp.tornado_settings = {
     'headers': {
         'X-Frame-Options': 'ALLOW_FROM https://knic.isi.edu',
-        'Content-Security-Policy': "frame-ancestors 'self' http://localhost:5641 https://knic.isi.edu",
+        'Content-Security-Policy': "frame-ancestors 'self' http://localhost:5641 http://localhost:3000 https://knic.isi.edu",
     }
 }
