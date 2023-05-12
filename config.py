@@ -6,7 +6,7 @@ config = get_config()
 config.IdentityProvider.token = '' # Do not bother with a jupyter lab token
 config.ServerApp.password = '' # Do not require a password to open jupyter lab
 config.ServerApp.allow_origin = '*' # Allow requests from any origin (insecure)
-config.ServerApp.allow_credentials = True # Set the Access-Control-Allow-Credentials response header
+config.ServerApp.disable_check_xsrf = True # Disable XSRF checking in jupyter lab
 config.ServerApp.tornado_settings = {
     'headers': {
         'X-Frame-Options': 'ALLOW_FROM https://knic.isi.edu',
