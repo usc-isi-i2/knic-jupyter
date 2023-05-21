@@ -50,6 +50,9 @@ const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT = `https://knic.isi.edu/engine/user/${USER}/event`;
 
 console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
+console.log('77777777777777777777!@#$!@#$!@#$!@#$!@#$!@#$!#$!@#$')
+const test = process.env.SERVER_ENDPOINT
+console.log(`ENV VAR TEST - SERVER_ENDPOINT: ${test}`)
 
 let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
