@@ -14,6 +14,7 @@ if [ "$DEVELOP" = "--develop" ] ; then
     echo "Running the 'npm run build:lib' command to rebuild with new location.."
     export SERVER_ENDPOINT="http://localhost:5642/knic"
     echo $SERVER_ENDPOINT
+    jupyter lab clean
     npm run clean:all
     npm run build:lib:dev
     npm run build:labextension
