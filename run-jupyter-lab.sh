@@ -12,6 +12,12 @@ if [ "$DEVELOP" = "--develop" ] ; then
     echo "Running Jupyter Lab in development mode.."
     echo "Changing location of knic-engine to 'http://localhost:5642/knic'.."
     echo "Running the 'npm run build:lib' command to rebuild with new location.."
+    export SERVER_ENDPOINT="http://localhost:5642/knic"
+    echo $SERVER_ENDPOINT
+    npm run clean:all
+    npm run build:lib:dev
+    npm run build:labextension
+    npm run install:extension
     jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
 else
     echo "Running Jupyter Lab in production mode.."
