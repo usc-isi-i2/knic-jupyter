@@ -1,29 +1,38 @@
 #!/bin/bash
 
+# Port number used for `knic-jupyter`
 PORT=5644
 
 # Get the absolute path to the `knic-jupyter` directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SOURCE_FILE="$DIR/src/index.ts"
+CHANGELOG="$DIR/src/changelog.txt"
 CONFIG="$DIR/config.py"
-DEVELOP=$1
 
 PRODUCTION_ENDPOINT="https://knic.isi.edu/engine"
 DEVELOPMENT_ENDPOINT="http://localhost:5642/knic"
 
-# Rebuild Jupyter Lab library to work with `knic-engine` running on localhost
-if [ "$DEVELOP" = "--develop" ] ; then
+# Check if the user is running Jupyter Lab in develop mode or not
+if [ "$1" = "--develop" ] ; then
     echo "Running Jupyter Lab in DEVELOPMENT mode.."
-    echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $DEVELOPMENT_ENDPOINT"
-    sed "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
-    mv $DIR/src/temp.ts $DIR/src/index.ts
-    sed -n '50p' $DIR/src/index.ts
+    sed -i "" -e "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
+    if [ -s $CHANGELOG ]; then
+        cat $CHANGELOG
+    fi
+    echo "knic-engine endpoint = $DEVELOPMENT_ENDPOINT"
 else
     echo "Running Jupyter Lab in PRODUCTION mode.."
-    echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $PRODUCTION_ENDPOINT"
-    sed "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
-    mv $DIR/src/temp.ts $DIR/src/index.ts
-    sed -n '50p' $DIR/src/index.ts
+    sed -i "" -e "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
+    if [ -s $CHANGELOG ]; then
+        cat $CHANGELOG
+    fi
+    echo "knic-engine endpoint = $PRODUCTION_ENDPOINT"
 fi
 
-pip install -ve .
+# Rebuild Jupyter Lab if knic-engine endpoint changed
+if [ -s $CHANGELOG ]; then
+    pip install -ve .
+fi
+
+# Run Jupyter Lab with our desired PORT and CONFIG file settings
 jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
