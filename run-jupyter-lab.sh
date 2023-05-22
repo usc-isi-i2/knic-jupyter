@@ -18,6 +18,7 @@ if [ "$1" = "--develop" ] ; then
     if [ -s changelog.txt ]; then
         cat changelog.txt
     fi
+    echo "knic-engine endpoint = $DEVELOPMENT_ENDPOINT"
 else
     echo "Running Jupyter Lab in PRODUCTION mode.."
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $PRODUCTION_ENDPOINT"
@@ -25,6 +26,7 @@ else
     if [ -s changelog.txt ]; then
         cat changelog.txt
     fi
+    echo "knic-engine endpoint = $PRODUCTION_ENDPOINT"
 fi
 
 pip install -ve .
