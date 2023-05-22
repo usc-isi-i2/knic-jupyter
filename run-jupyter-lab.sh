@@ -12,7 +12,7 @@ DEVELOPMENT_ENDPOINT="http://localhost:5642/knic"
 
 # Rebuild Jupyter Lab library to work with `knic-engine` running on localhost
 if [ "$DEVELOP" = "--develop" ] ; then
-    echo "Running Jupyter Lab in development mode.."
+    echo "Running Jupyter Lab in DEVELOPMENT mode.."
     echo "Changing location of knic-engine to 'http://localhost:5642/knic'.."
     echo "Changing 'src/index.ts' file to rebuild with new knic-engine location: $DEVELOPMENT_ENDPOINT"
     sed "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
@@ -20,7 +20,7 @@ if [ "$DEVELOP" = "--develop" ] ; then
     pip install -ve .
     jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
 else
-    echo "Running Jupyter Lab in production mode.."
+    echo "Running Jupyter Lab in PRODUCTION mode.."
     echo "Changing 'src/index.ts' file to rebuild with new knic-engine location: $PRODUCTION_ENDPOINT"
     sed "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
     mv $DIR/src/temp.ts $DIR/src/index.ts
