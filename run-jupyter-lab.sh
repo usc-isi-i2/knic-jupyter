@@ -6,13 +6,12 @@ PORT=5644
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 SOURCE="$DIR/src/index.ts"
 CONFIG="$DIR/config.py"
-DEVELOP=$1
 
 PRODUCTION_ENDPOINT="https://knic.isi.edu/engine"
 DEVELOPMENT_ENDPOINT="http://localhost:5642/knic"
 
 # Rebuild Jupyter Lab library to work with `knic-engine` running on localhost
-if [ "$DEVELOP" = "--develop" ] ; then
+if [ "$1" = "--develop" ] ; then
     echo "Running Jupyter Lab in DEVELOPMENT mode.."
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $DEVELOPMENT_ENDPOINT"
     sed -i -e "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" "$SOURCE"
