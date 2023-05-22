@@ -4,6 +4,7 @@ PORT=5644
 
 # Get the absolute path to the `knic-jupyter` directory
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+SOURCE="$DIR/src/index.ts"
 CONFIG="$DIR/config.py"
 DEVELOP=$1
 
@@ -14,14 +15,12 @@ DEVELOPMENT_ENDPOINT="http://localhost:5642/knic"
 if [ "$DEVELOP" = "--develop" ] ; then
     echo "Running Jupyter Lab in DEVELOPMENT mode.."
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $DEVELOPMENT_ENDPOINT"
-    sed "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
-    mv $DIR/src/temp.ts $DIR/src/index.ts
+    sed -i -e "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" "$SOURCE"
     sed -n '50p' $DIR/src/index.ts
 else
     echo "Running Jupyter Lab in PRODUCTION mode.."
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $PRODUCTION_ENDPOINT"
-    sed "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
-    mv $DIR/src/temp.ts $DIR/src/index.ts
+    sed -i -e "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|g" "$SOURCE"
     sed -n '50p' $DIR/src/index.ts
 fi
 
