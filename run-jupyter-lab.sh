@@ -27,5 +27,8 @@ else
     echo "knic-engine endpoint = $PRODUCTION_ENDPOINT"
 fi
 
-pip install -ve .
+if [ -s changelog.txt ]; then
+    pip install -ve .
+fi
+
 jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
