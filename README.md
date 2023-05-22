@@ -34,19 +34,15 @@ From there, if any additional dependencies are required you can install those us
 
 ## Development
 
-KNIC Jupyter lab extension is built with `knic-engine` location set to [https://knic.isi.edu/engine](https://knic.isi.edu/engine)
+KNIC Jupyter lab extension is pre-built with `knic-engine` location set to [https://knic.isi.edu/engine](https://knic.isi.edu/engine)
 
-If you are running `knic-engine` locally for development purposes, for example on `http://localhost:5642/knic`, you would need to change this [SERVER_ENDPOINT](https://github.com/usc-isi-i2/knic-jupyter/blob/main/src/index.ts#L169) variable.
+If you are running `knic-engine` locally for development purposes, i.e. on `http://localhost:5642/knic`, you could add a `--develop` flag to the `run-jupyter-lab.sh` command.
+This will change the endpoint of `knic-engine` from our production setting, to your local setting.
 
 For example:
 
-```js
-const SERVER_ENDPOINT = `http://localhost:5642/knic/user/${USER}/event`;
-```
-
-After that you would need to rebuild `knic-jupyter` for the changes to take effect:
-
 ```console
-pip install -ve .
-./run-jupyter-lab.sh
+./run-jupyter-lab.sh --develop
 ```
+
+_NOTE: It might take a little longer to spin up jupyter lab if the `knic-engine` endpoint changed as we would need to rebuild our extension._
