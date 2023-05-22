@@ -16,13 +16,14 @@ if [ "$DEVELOP" = "--develop" ] ; then
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $DEVELOPMENT_ENDPOINT"
     sed "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
     mv $DIR/src/temp.ts $DIR/src/index.ts
-    pip install -ve .
-    jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
+    sed -n '50p' $DIR/src/index.ts
 else
     echo "Running Jupyter Lab in PRODUCTION mode.."
     echo "Changing 'src/index.ts' file to rebuild with our new location for knic-engine: $PRODUCTION_ENDPOINT"
     sed "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|g" $DIR/src/index.ts >> $DIR/src/temp.ts
     mv $DIR/src/temp.ts $DIR/src/index.ts
-    pip install -ve .
-    jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
+    sed -n '50p' $DIR/src/index.ts
 fi
+
+pip install -ve .
+jupyter lab --no-browser --allow-root --port $PORT --config=$CONFIG
