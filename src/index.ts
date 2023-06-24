@@ -21,6 +21,13 @@ import { UUID } from '@lumino/coreutils';
 import { Dexie } from 'dexie';
 import axios from 'axios';
 
+
+/**
+ * Supported Jupyter Lab events in knic-jupyter
+ */
+
+
+const JUPYTER_LOADED_EVENT = 'JUPYTER_LOADED';
 const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
 const NOTEBOOK_LOADED_EVENT = 'NOTEBOOK_LOADED';
 const CELL_SELECTED_EVENT = 'CELL_SELECTED';
@@ -29,8 +36,28 @@ const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
-const SERVER_ENDPOINT = process.env.LOGGING_ENDPOINT || 'http://localhost:8888';
+
+/**
+ * Initialization data for knic-jupyter
+ */
+
+
 const USE_DEXIE =  new Boolean(process.env.USE_DEXIE) || false;
+
+let db: Dexie;
+
+const USER = new URLSearchParams(window.location.search).get('userid');
+const SESSION = new URLSearchParams(window.location.search).get('sessionid');
+const SERVER_ENDPOINT = `https://knic.isi.edu/engine/user/${USER}/event`;
+
+console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
+
+let ENUMERATION = 0;
+let NOTEBOOK_SESSION = UUID.uuid4();
+
+const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+let notebookNameStore = '';
+let errorConnecting = false;
 
 interface ICellData {
   cellId: string;
@@ -47,6 +74,10 @@ interface IErrorData {
 
 interface IEventData {
   notebookName: string;
+  location: string;
+}
+
+interface IJupyterLoaded {
   location: string;
 }
 
@@ -75,14 +106,15 @@ interface ICellExecutionEnded extends IEventData {
 }
 
 interface INotebookEvent {
-  user: string|null;
-  session: string|null;
+  user: string | null;
+  session: string | null;
   timestamp: string;
   eventName: string;
   enumeration: number;
   notebookSession: string;
   eventData:
     | IEventData
+    | IJupyterLoaded
     | INotebookModified
     | ICellExecutionBegin
     | ICellExecutionEnded
@@ -93,10 +125,6 @@ interface INotebookEvent {
 export interface IWindow extends Window {
   webkitSpeechRecognition: any;
 }
-
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-let notebookNameStore = '';
-let errorConnecting = false;
 
 /**
  * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
@@ -147,30 +175,26 @@ function setupPerpetualSpeechRecognition() {
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   };
   recognition.start();
 }
 
-/**
- * Initialization data for the KNICS_Jupyter_frontend extension.
- */
-
-let db: Dexie;
-
-const USER = new URLSearchParams(window.location.search).get("userid");
-const SESSION = new URLSearchParams(window.location.search).get("sessionid");
-let ENUMERATION = 0;
-let NOTEBOOK_SESSION = UUID.uuid4()
-
 const plugin: JupyterFrontEndPlugin<void> = {
-  id: 'KNICS_Jupyter_frontend:plugin',
+  id: 'knic-jupyter:plugin',
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, notebookTracker: INotebookTracker) => {
-    if(USE_DEXIE)
+    if (USE_DEXIE) {
       db = setupDB();
-    console.log('JupyterLab extension KNICS_Jupyter_frontend is activated!');
+    }
+    console.log('knic-jupyter is activated!');
+
+    // Log jupyter loaded event
+    onJupyterLoaded()
+
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
     notebookTracker.currentChanged.connect(onCurrentChanged, this);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
@@ -180,7 +204,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
   }
 };
 
-let timeout:NodeJS.Timeout | undefined = undefined;
+let timeout: NodeJS.Timeout | undefined = undefined;
 
 function setupDB(): Dexie {
   db = new Dexie('database');
@@ -264,12 +288,15 @@ async function onCellExecutionBegin(
 
     console.log(CELL_EXECUTION_BEGIN_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    if(USE_DEXIE)
+    if (USE_DEXIE) {
       await db.table('logs').add({
        eventName: CELL_EXECUTION_BEGIN_EVENT,
        data: JSON.stringify(event, null, 2)
      });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    }
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -331,13 +358,16 @@ async function onCellExecutionEnded(
     };
     console.log(CELL_EXECUTED_END_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    if(USE_DEXIE)
+    if (USE_DEXIE) {
       await db.table('logs').add({
         eventName: CELL_EXECUTED_END_EVENT,
         data: JSON.stringify(event, null, 2)
       });
+    }
 
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 
@@ -362,12 +392,40 @@ async function onWidgetAdded(
   };
   console.log(NOTEBOOK_OPENED_EVENT);
   console.log(JSON.stringify(event, null, 2));
-  if(USE_DEXIE)
+  if (USE_DEXIE) {
     await db.table('logs').add({
       eventName: NOTEBOOK_OPENED_EVENT,
       data: JSON.stringify(event, null, 2)
     });
-  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+  }
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
+async function onJupyterLoaded(): Promise<void> {
+  ENUMERATION = 0;
+  NOTEBOOK_SESSION = UUID.uuid4();
+  const event: INotebookEvent = {
+    eventData: {
+      location: window.location.toString()
+    },
+    user: USER,
+    session: SESSION,
+    enumeration: ENUMERATION++,
+    notebookSession: NOTEBOOK_SESSION,
+    timestamp: new Date().toISOString(),
+    eventName: JUPYTER_LOADED_EVENT
+  };
+  if (USE_DEXIE) {
+    await db.table('logs').add({
+      eventName: JUPYTER_LOADED_EVENT,
+      data: JSON.stringify(event, null, 2)
+    });
+  }
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+    headers: { 'Content-Type': 'application/json' }
+  });
 }
 
 async function onModelContentChanged(emitter: Notebook): Promise<void> {
@@ -398,12 +456,15 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
     };
     console.log(NOTEBOOK_MODIFIED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    if(USE_DEXIE)
+    if (USE_DEXIE) {
       await db.table('logs').add({
         eventName: NOTEBOOK_MODIFIED_EVENT,
         data: JSON.stringify(event, null, 2)
       });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    }
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }, 5000);
 }
 
@@ -429,12 +490,15 @@ async function logActiveCell(
     };
     console.log(CELL_SELECTED_EVENT);
     console.log(JSON.stringify(event, null, 2));
-    if(USE_DEXIE)
+    if (USE_DEXIE) {
       await db.table('logs').add({
         eventName: CELL_SELECTED_EVENT,
         data: JSON.stringify(event, null, 2)
       });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+    }
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 }
 

@@ -17,7 +17,7 @@ test('should emit an activation console message', async ({ page }) => {
 
   expect(
     logs.filter(
-      s => s === 'JupyterLab extension KNICS_Jupyter_frontend is activated!'
+      s => s === 'knic-jupyter is activated!'
     )
   ).toHaveLength(1);
 });

@@ -6,7 +6,7 @@ node_modules/
 *.egg-info/
 .ipynb_checkpoints
 *.tsbuildinfo
-KNICS_Jupyter_frontend/labextension
+knic-jupyter/labextension
 
 # Integration tests
 ui-tests/test-results/
@@ -116,3 +116,6 @@ dmypy.json
 
 # OSX files
 .DS_Store
+
+# Bash scripts
+src/changelog.txt

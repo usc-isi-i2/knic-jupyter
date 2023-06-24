@@ -1,4 +1,4 @@
-# Making a new release of KNICS_Jupyter_frontend
+# Making a new release of knic-jupyter
 
 The extension can be published to `PyPI` and `npm` manually or using the [Jupyter Releaser](https://github.com/jupyter-server/jupyter_releaser).
 
@@ -6,25 +6,26 @@ The extension can be published to `PyPI` and `npm` manually or using the [Jupyte
 
 ### Python package
 
-This extension can be distributed as Python
-packages. All of the Python
-packaging instructions in the `pyproject.toml` file to wrap your extension in a
-Python package. Before generating a package, we first need to install `build`.
+`knic-jupyter` can be distributed as a Python package. All of the Python packaging instructions are in the `pyproject.toml` file and are used to wrap `knic-jupyter` in a Python package.
 
-```bash
+However, before generating a package, we first need to install the requirements necessary for the build.
+
+```console
 pip install build twine hatch
 ```
 
-Bump the version using `hatch`. By default this will create a tag.
+Bump the version using `hatch`.
+By default this will create a new tag.
+Typically, the very first version is going to be 0.1.0
 See the docs on [hatch-nodejs-version](https://github.com/agoose77/hatch-nodejs-version#semver) for details.
 
-```bash
+```console
 hatch version <new-version>
 ```
 
-To create a Python source package (`.tar.gz`) and the binary package (`.whl`) in the `dist/` directory, do:
+To create a Python source package (`.tar.gz`) and the binary package (`.whl`) in the `dist/` directory, run the following code:
 
-```bash
+```console
 python -m build
 ```
 
@@ -32,7 +33,7 @@ python -m build
 
 Then to upload the package to PyPI, do:
 
-```bash
+```console
 twine upload dist/*
 ```
 
@@ -40,7 +41,7 @@ twine upload dist/*
 
 To publish the frontend part of the extension as a NPM package, do:
 
-```bash
+```console
 npm login
 npm publish --access public
 ```

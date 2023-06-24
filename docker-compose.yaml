@@ -1,0 +1,15 @@
+version: "3"
+services:
+  knic-jupyter:
+    image: docker-reg.ads.isi.edu:443/knic-jupyter
+    command: sh -c "jupyter lab --port 5644 --no-browser --ip='0.0.0.0' --IdentityProvider.token='' --ServerApp.password='' --ServerApp.allow_origin='*' --allow-root"
+    container_name: knic-jupyter
+    restart: always
+    ports:
+      - "5644:5644"
+    volumes:
+      - /data/knic-notebooks:/knic-jupyter/notebooks
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
