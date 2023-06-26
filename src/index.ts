@@ -29,7 +29,6 @@ import axios from 'axios';
 
 const JUPYTER_LOADED_EVENT = 'JUPYTER_LOADED';
 const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
-const NOTEBOOK_LOADED_EVENT = 'NOTEBOOK_LOADED';
 const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
@@ -196,7 +195,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     onJupyterLoaded()
 
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
-    notebookTracker.currentChanged.connect(onCurrentChanged, this);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
@@ -223,44 +221,6 @@ function toCellData(cellModel: ICellModel): ICellData {
     metadata: cellModel.metadata,
     value: cellModel.value.text
   };
-}
-
-async function onCurrentChanged(emitter:INotebookTracker, args: NotebookPanel | null)
-{
-  if(emitter.currentWidget && args != null)
-  {
-      const notebook = args.content;
-
-      const cells: ICellData[] = [];
-      if (notebook.model?.cells) {
-        for (let index = 0; index < notebook.model.cells.length; index++) {
-          const cellModel: ICellModel = notebook.model.cells.get(index);
-          cells.push(toCellData(cellModel));
-        }
-      }
-
-      const event: INotebookEvent = {
-        eventData: {
-          notebookName: args.context.path,
-          location: window.location.toString(),
-          cells: cells
-        },
-        enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
-        eventName: NOTEBOOK_LOADED_EVENT,
-        user: USER,
-        session: SESSION,
-        timestamp: new Date().toISOString()
-      };
-      console.log(NOTEBOOK_LOADED_EVENT);
-      console.log(JSON.stringify(event, null, 2));
-      if(USE_DEXIE)
-        await db.table('logs').add({
-          eventName: NOTEBOOK_LOADED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
-      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
-  }
 }
 
 async function onCellExecutionBegin(
