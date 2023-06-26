@@ -125,7 +125,6 @@ export interface IWindow extends Window {
   webkitSpeechRecognition: any;
 }
 
-let notebookJustOpened:boolean = false;
 /**
  * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
  */
@@ -336,7 +335,6 @@ async function onWidgetAdded(
   emitter: INotebookTracker,
   args: NotebookPanel
 ): Promise<void> {
-  notebookJustOpened = true;
   args.content.modelContentChanged.connect(onModelContentChanged);
   ENUMERATION = 0;
   NOTEBOOK_SESSION = UUID.uuid4();
@@ -391,83 +389,43 @@ async function onJupyterLoaded(): Promise<void> {
 }
 
 async function onModelContentChanged(emitter: Notebook): Promise<void> {
-
-  if(notebookJustOpened)
-  {
-    notebookJustOpened = false;
-    setTimeout(async () => {
-      const cells: ICellData[] = [];
-      if (emitter.model?.cells) {
-        for (let index = 0; index < emitter.model.cells.length; index++) {
-          const cellModel: ICellModel = emitter.model.cells.get(index);
-          cells.push(toCellData(cellModel));
-        }
-      }
-
-      const parent: NotebookPanel = emitter.parent as NotebookPanel;
-
-      const event: INotebookEvent = {
-        eventData: {
-          notebookName: parent.context.path,
-          location: window.location.toString(),
-          cells: cells
-        },
-        enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
-        eventName: NOTEBOOK_LOADED_EVENT,
-        user: USER,
-        session: SESSION,
-        timestamp: new Date().toISOString()
-      };
-      console.log(NOTEBOOK_LOADED_EVENT);
-      console.log(JSON.stringify(event, null, 2));
-      if(USE_DEXIE)
-        await db.table('logs').add({
-          eventName: NOTEBOOK_LOADED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
-      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
-    }, 1000);
+  if (timeout) {
+    clearTimeout(timeout);
   }
-  else{
-    if (timeout) {
-      clearTimeout(timeout);
+  timeout = setTimeout(async () => {
+    const parent: NotebookPanel = emitter.parent as NotebookPanel;
+    const cells: ICellData[] = [];
+    if (emitter.model?.cells) {
+      for (let index = 0; index < emitter.model.cells.length; index++) {
+        const cellModel: ICellModel = emitter.model.cells.get(index);
+        cells.push(toCellData(cellModel));
+      }
     }
-    timeout = setTimeout(async () => {
-      const parent: NotebookPanel = emitter.parent as NotebookPanel;
-      const cells: ICellData[] = [];
-      if (emitter.model?.cells) {
-        for (let index = 0; index < emitter.model.cells.length; index++) {
-          const cellModel: ICellModel = emitter.model.cells.get(index);
-          cells.push(toCellData(cellModel));
-        }
-      }
-      const event: INotebookEvent = {
-        eventData: {
-          notebookName: parent.context.path,
-          location: window.location.toString(),
-          cells: cells
-        },
-        enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
+    const event: INotebookEvent = {
+      eventData: {
+        notebookName: parent.context.path,
+        location: window.location.toString(),
+        cells: cells
+      },
+      enumeration: ENUMERATION++,
+      notebookSession: NOTEBOOK_SESSION,
+      eventName: NOTEBOOK_MODIFIED_EVENT,
+      user: USER,
+      session: SESSION,
+      timestamp: new Date().toISOString()
+    };
+    console.log(NOTEBOOK_MODIFIED_EVENT);
+    console.log(JSON.stringify(event, null, 2));
+    if (USE_DEXIE) {
+      await db.table('logs').add({
         eventName: NOTEBOOK_MODIFIED_EVENT,
-        user: USER,
-        session: SESSION,
-        timestamp: new Date().toISOString()
-      };
-      console.log(NOTEBOOK_MODIFIED_EVENT);
-      console.log(JSON.stringify(event, null, 2));
-      if (USE_DEXIE) {
-        await db.table('logs').add({
-          eventName: NOTEBOOK_MODIFIED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
-      }
-      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
-        headers: { 'Content-Type': 'application/json' }
+        data: JSON.stringify(event, null, 2)
       });
-    }, 5000);
-  }
+    }
+    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }, 5000);
 }
 
 async function logActiveCell(
