@@ -29,6 +29,7 @@ import axios from 'axios';
 
 const JUPYTER_LOADED_EVENT = 'JUPYTER_LOADED';
 const NOTEBOOK_OPENED_EVENT = 'NOTEBOOK_OPENED';
+const NOTEBOOK_LOADED_EVENT = 'NOTEBOOK_LOADED';
 const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
@@ -426,7 +427,9 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
           eventName: NOTEBOOK_LOADED_EVENT,
           data: JSON.stringify(event, null, 2)
         });
-      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)));
+      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+        headers: { 'Content-Type': 'application/json' }
+      });
     }, 1000);
   }
   else{
