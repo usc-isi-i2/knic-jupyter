@@ -34,7 +34,6 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
-const SPEECH_DETECTED = 'SPEECH_DETECTED';
 
 
 /**
@@ -54,10 +53,6 @@ console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
 
 let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
-
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
-let notebookNameStore = '';
-let errorConnecting = false;
 
 interface ICellData {
   cellId: string;
@@ -89,10 +84,6 @@ interface INotebookModified extends IEventData {
   cells: ICellData[];
 }
 
-interface ISpeechDetected extends IEventData {
-  transcript: string;
-}
-
 interface ICellExecutionBegin extends IEventData {
   cell: ICellData;
   executionCount: number;
@@ -118,71 +109,10 @@ interface INotebookEvent {
     | INotebookModified
     | ICellExecutionBegin
     | ICellExecutionEnded
-    | ICellSelected
-    | ISpeechDetected;
-}
-
-export interface IWindow extends Window {
-  webkitSpeechRecognition: any;
+    | ICellSelected;
 }
 
 let notebookJustOpened:boolean = false;
-/**
- * Keeps the speech recognition running at all times, if it disconnects due to an error, then it tries to reconnect every 5 seconds, else instant reconnect
- */
-function setupPerpetualSpeechRecognition() {
-  const { webkitSpeechRecognition }: IWindow = <IWindow>(<unknown>window);
-  const recognition = new webkitSpeechRecognition();
-  recognition.continuous = true;
-  recognition.addEventListener('start', () => {
-    console.log('speech recognition has started');
-  });
-  recognition.addEventListener('error', (event: any) => {
-    errorConnecting = event.error !== 'no-speech';
-    console.error('speech error occured', event);
-  });
-  recognition.addEventListener('end', (event: any) => {
-    console.log(
-      'Speech recognition service disconnected, attempting to reconnect.'
-    );
-    if (errorConnecting) {
-      // unexpected error, wait then try to reconnect
-      delay(5000).then(() => {
-        recognition.start();
-      });
-    } else {
-      recognition.start();
-    }
-  });
-  recognition.onresult = (res: any) => {
-    const newTranscript: string =
-      res.results[res.results.length - 1][0].transcript;
-    const event: INotebookEvent = {
-      eventData: {
-        notebookName: notebookNameStore,
-        location: window.location.toString(),
-        transcript: newTranscript.trim()
-      },
-      enumeration: ENUMERATION++,
-      notebookSession: NOTEBOOK_SESSION,
-      eventName: SPEECH_DETECTED,
-      user: USER,
-      session: SESSION,
-      timestamp: new Date().toISOString()
-    };
-
-    console.log(JSON.stringify(event, null, 2));
-    db.table('logs').add({
-      eventName: CELL_EXECUTION_BEGIN_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
-    axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
-      headers: { 'Content-Type': 'application/json' }
-    });
-  };
-  recognition.start();
-}
-
 const plugin: JupyterFrontEndPlugin<void> = {
   id: 'knic-jupyter:plugin',
   autoStart: true,
@@ -200,7 +130,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
-    setupPerpetualSpeechRecognition();
   }
 };
 
@@ -478,7 +407,6 @@ async function logActiveCell(
   args: Cell<ICellModel> | null
 ): Promise<void> {
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
-  notebookNameStore = parent.context.path;
   if (args?.model) {
     const event: INotebookEvent = {
       eventData: {
