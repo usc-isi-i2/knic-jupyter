@@ -49,8 +49,6 @@ const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT = `http://localhost:5642/knic/user/${USER}/event`;
 
-console.log(`SERVER_ENDPOINT: ${SERVER_ENDPOINT}`)
-
 let ENUMERATION = 0;
 let NOTEBOOK_SESSION = UUID.uuid4();
 
@@ -121,7 +119,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     if (USE_DEXIE) {
       db = setupDB();
     }
-    console.log('knic-jupyter is activated!');
 
     // Log jupyter loaded event
     onJupyterLoaded()
@@ -176,9 +173,6 @@ async function onCellExecutionBegin(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
-
-    console.log(CELL_EXECUTION_BEGIN_EVENT);
-    console.log(JSON.stringify(event, null, 2));
     if (USE_DEXIE) {
       await db.table('logs').add({
        eventName: CELL_EXECUTION_BEGIN_EVENT,
@@ -247,8 +241,6 @@ async function onCellExecutionEnded(
       user: USER,
       timestamp: new Date().toISOString()
     };
-    console.log(CELL_EXECUTED_END_EVENT);
-    console.log(JSON.stringify(event, null, 2));
     if (USE_DEXIE) {
       await db.table('logs').add({
         eventName: CELL_EXECUTED_END_EVENT,
@@ -282,8 +274,6 @@ async function onWidgetAdded(
     timestamp: new Date().toISOString(),
     eventName: NOTEBOOK_OPENED_EVENT
   };
-  console.log(NOTEBOOK_OPENED_EVENT);
-  console.log(JSON.stringify(event, null, 2));
   if (USE_DEXIE) {
     await db.table('logs').add({
       eventName: NOTEBOOK_OPENED_EVENT,
@@ -349,8 +339,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         session: SESSION,
         timestamp: new Date().toISOString()
       };
-      console.log(NOTEBOOK_LOADED_EVENT);
-      console.log(JSON.stringify(event, null, 2));
       if(USE_DEXIE)
         await db.table('logs').add({
           eventName: NOTEBOOK_LOADED_EVENT,
@@ -387,8 +375,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         session: SESSION,
         timestamp: new Date().toISOString()
       };
-      console.log(NOTEBOOK_MODIFIED_EVENT);
-      console.log(JSON.stringify(event, null, 2));
       if (USE_DEXIE) {
         await db.table('logs').add({
           eventName: NOTEBOOK_MODIFIED_EVENT,
@@ -421,8 +407,6 @@ async function logActiveCell(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
-    console.log(CELL_SELECTED_EVENT);
-    console.log(JSON.stringify(event, null, 2));
     if (USE_DEXIE) {
       await db.table('logs').add({
         eventName: CELL_SELECTED_EVENT,
