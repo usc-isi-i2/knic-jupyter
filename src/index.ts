@@ -131,10 +131,10 @@ const plugin: JupyterFrontEndPlugin<void> = {
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
 
     // WIP_2: This would be the ideal solution
-    notebookTracker.activeCell?.model.contentChanged.connect(
-      logDisplayChange,
-      this
-    );
+    //notebookTracker.activeCell?.model.contentChanged.connect(
+    //  logDisplayChange,
+    //  this
+    //);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
@@ -450,7 +450,11 @@ async function logActiveCell(
   emitter: INotebookTracker,
   args: Cell<ICellModel> | null
 ): Promise<void> {
+
+  args?.model.contentChanged.connect(logDisplayChange)
+
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
+
   if (args?.model) {
     const event: INotebookEvent = {
       eventData: {
