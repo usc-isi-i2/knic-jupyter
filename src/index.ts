@@ -32,6 +32,7 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
+const CELL_MODIFIED_EXECUTED_EVENT = 'CELL_MODIFIED_EXECUTED';
 const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
 
 /**
@@ -77,8 +78,14 @@ interface ICellSelected extends IEventData {
   cell: ICellData;
 }
 
+interface ICellModifiedExecuted extends IEventData {
+  cell: ICellData;
+  isCellModified: boolean;
+}
+
 interface ICellModified extends IEventData {
   cell: ICellData;
+  changeEvents: ICellData[];
   isCellModified: boolean;
 }
 
@@ -112,6 +119,7 @@ interface INotebookEvent {
     | ICellExecutionBegin
     | ICellExecutionEnded
     | ICellSelected
+    | ICellModifiedExecuted
     | ICellModified;
 }
 
@@ -209,6 +217,7 @@ async function onCellExecutionBegin(
   }
 }
 
+// WIP_1: This is a temporary workaround.
 async function onCellExecutionEnded(
   emitter: any,
   args: {
@@ -267,7 +276,7 @@ async function onCellExecutionEnded(
     };
 
     // This is part of `WIP_1`
-    const cell_modified_event: INotebookEvent = {
+    const cell_modified_executed_event: INotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
         notebookName: parent.context.path,
@@ -276,14 +285,11 @@ async function onCellExecutionEnded(
       },
       enumeration: ENUMERATION++,
       notebookSession: NOTEBOOK_SESSION,
-      eventName: CELL_MODIFIED_EVENT,
+      eventName: CELL_MODIFIED_EXECUTED_EVENT,
       session: SESSION,
       user: USER,
       timestamp: new Date().toISOString()
     };
-
-    // TODO: Remove this before you commit
-    // console.log(cell_modified_event);
 
     if (USE_DEXIE) {
       await db.table('logs').add({
@@ -293,8 +299,8 @@ async function onCellExecutionEnded(
 
       // This is part of `WIP_1`
       await db.table('logs').add({
-        eventName: CELL_MODIFIED_EVENT,
-        data: JSON.stringify(cell_modified_event, null, 2)
+        eventName: CELL_MODIFIED_EXECUTED_EVENT,
+        data: JSON.stringify(cell_modified_executed_event, null, 2)
       });
     }
 
@@ -305,7 +311,7 @@ async function onCellExecutionEnded(
     // This is part of `WIP_1`
     axios.post(
       SERVER_ENDPOINT,
-      encodeURI(JSON.stringify(cell_modified_event)),
+      encodeURI(JSON.stringify(cell_modified_executed_event)),
       {
         headers: { 'Content-Type': 'application/json' }
       }
@@ -417,6 +423,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         for (let index = 0; index < emitter.model.cells.length; index++) {
           const cellModel: ICellModel = emitter.model.cells.get(index);
           cells.push(toCellData(cellModel));
+          ORIGINAL_CELL_DATA.push(toCellData(cellModel)); // This is part of `WIP_1`
         }
       }
       const event: INotebookEvent = {
@@ -445,14 +452,12 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
   }
 }
 
-// WIP_1: This is a temporary workaround.
+var CHANGE_EVENTS: ICellData[] = [];
+
 async function logActiveCell(
   emitter: INotebookTracker,
   args: Cell<ICellModel> | null
 ): Promise<void> {
-
-  args?.model.contentChanged.connect(logDisplayChange)
-
   const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
 
   if (args?.model) {
@@ -479,37 +484,47 @@ async function logActiveCell(
       headers: { 'Content-Type': 'application/json' }
     });
   }
+
+  setInterval(async () => {
+    if (args?.model) {
+      const event: INotebookEvent = {
+        eventData: {
+          cell: toCellData(args?.model),
+          notebookName: parent.context.path,
+          location: window.location.toString(),
+          changeEvents: CHANGE_EVENTS
+        },
+        enumeration: ENUMERATION++,
+        notebookSession: NOTEBOOK_SESSION,
+        eventName: CELL_MODIFIED_EVENT,
+        user: USER,
+        session: SESSION,
+        timestamp: new Date().toISOString()
+      };
+      if (USE_DEXIE) {
+        await db.table('logs').add({
+          eventName: CELL_MODIFIED_EVENT,
+          data: JSON.stringify(event, null, 2)
+        });
+      }
+      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+    }
+    CHANGE_EVENTS = [];
+  }, 15000);
+  args?.model.contentChanged.connect(logDisplayChange);
 }
 
 // Part of `WIP_2`
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
-  console.log(args);
-  // const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
-  // if (args?.model) {
-  //   const event: INotebookEvent = {
-  //     eventData: {
-  //       cell: toCellData(args?.model),
-  //       notebookName: parent.context.path,
-  //       location: window.location.toString()
-  //     },
-  //     enumeration: ENUMERATION++,
-  //     notebookSession: NOTEBOOK_SESSION,
-  //     eventName: 'SOMETHING_CHANGED',
-  //     user: USER,
-  //     session: SESSION,
-  //     timestamp: new Date().toISOString()
-  //   };
-  //   console.log(event);
-  //   if (USE_DEXIE) {
-  //     await db.table('logs').add({
-  //       eventName: 'SOMETHING_CHANGED',
-  //       data: JSON.stringify(event, null, 2)
-  //     });
-  //   }
-  //   // axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
-  //   //   headers: { 'Content-Type': 'application/json' }
-  //   // });
-  // }
+  if (args) {
+    console.log(CELL_MODIFIED_EVENT);
+    const cellData: ICellData = toCellData(args);
+    if (isCellModified(cellData)) {
+      CHANGE_EVENTS.push(cellData);
+    }
+  }
 }
 
 export default plugin;
