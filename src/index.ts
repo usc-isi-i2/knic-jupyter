@@ -86,7 +86,6 @@ interface ICellModifiedExecuted extends IEventData {
 interface ICellModified extends IEventData {
   cell: ICellData;
   changeEvents: ICellData[];
-  isCellModified: boolean;
 }
 
 interface INotebookModified extends IEventData {
@@ -290,6 +289,11 @@ async function onCellExecutionEnded(
       user: USER,
       timestamp: new Date().toISOString()
     };
+
+    // TODO: REMOVE THIS BEFORE MERGING
+    console.log('*******************************');
+    console.log('CELL_MODIFIED_EXECUTED_EVENT');
+    console.log('*******************************');
 
     if (USE_DEXIE) {
       await db.table('logs').add({
@@ -501,6 +505,12 @@ async function logActiveCell(
         session: SESSION,
         timestamp: new Date().toISOString()
       };
+
+      // TODO: REMOVE THIS BEFORE MERGING
+      console.log('*******************************');
+      console.log('CELL_MODIFIED_EVENT', event);
+      console.log('*******************************');
+
       if (USE_DEXIE) {
         await db.table('logs').add({
           eventName: CELL_MODIFIED_EVENT,
@@ -519,7 +529,6 @@ async function logActiveCell(
 // Part of `WIP_2`
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
   if (args) {
-    console.log(CELL_MODIFIED_EVENT);
     const cellData: ICellData = toCellData(args);
     if (isCellModified(cellData)) {
       CHANGE_EVENTS.push(cellData);
