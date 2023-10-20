@@ -142,12 +142,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
     onJupyterLoaded();
 
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
-
-    // WIP_2: This would be the ideal solution
-    //notebookTracker.activeCell?.model.contentChanged.connect(
-    //  logDisplayChange,
-    //  this
-    //);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
@@ -175,7 +169,6 @@ function toCellData(cellModel: ICellModel): ICellData {
   };
 }
 
-// This is part of `WIP_1`
 function isCellModified(cellDataExecuted: ICellData): boolean {
   if (
     ORIGINAL_CELL_DATA.some(
@@ -222,7 +215,6 @@ async function onCellExecutionBegin(
   }
 }
 
-// WIP_1: This is a temporary workaround.
 async function onCellExecutionEnded(
   emitter: any,
   args: {
@@ -280,52 +272,9 @@ async function onCellExecutionEnded(
       timestamp: new Date().toISOString()
     };
 
-    // This is part of `WIP_1`
-    const cell_modified_executed_event: INotebookEvent = {
-      eventData: {
-        cell: toCellData(args.cell.model),
-        notebookName: parent.context.path,
-        location: window.location.toString(),
-        isCellModified: isCellModified(toCellData(args.cell.model))
-      },
-      enumeration: ENUMERATION++,
-      notebookSession: NOTEBOOK_SESSION,
-      eventName: CELL_MODIFIED_EXECUTED_EVENT,
-      session: SESSION,
-      user: USER,
-      timestamp: new Date().toISOString()
-    };
-
-    // TODO: REMOVE THIS BEFORE MERGING
-    console.log('*******************************');
-    console.log('CELL_MODIFIED_EXECUTED_EVENT');
-    console.log('*******************************');
-
-    if (USE_DEXIE) {
-      await db.table('logs').add({
-        eventName: CELL_EXECUTED_END_EVENT,
-        data: JSON.stringify(event, null, 2)
-      });
-
-      // This is part of `WIP_1`
-      await db.table('logs').add({
-        eventName: CELL_MODIFIED_EXECUTED_EVENT,
-        data: JSON.stringify(cell_modified_executed_event, null, 2)
-      });
-    }
-
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
-
-    // This is part of `WIP_1`
-    axios.post(
-      SERVER_ENDPOINT,
-      encodeURI(JSON.stringify(cell_modified_executed_event)),
-      {
-        headers: { 'Content-Type': 'application/json' }
-      }
-    );
   }
 }
 
@@ -395,7 +344,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         for (let index = 0; index < emitter.model.cells.length; index++) {
           const cellModel: ICellModel = emitter.model.cells.get(index);
           cells.push(toCellData(cellModel));
-          ORIGINAL_CELL_DATA.push(toCellData(cellModel)); // This is part of `WIP_1`
+          ORIGINAL_CELL_DATA.push(toCellData(cellModel));
         }
       }
 
@@ -434,7 +383,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         for (let index = 0; index < emitter.model.cells.length; index++) {
           const cellModel: ICellModel = emitter.model.cells.get(index);
           cells.push(toCellData(cellModel));
-          ORIGINAL_CELL_DATA.push(toCellData(cellModel)); // This is part of `WIP_1`
+          ORIGINAL_CELL_DATA.push(toCellData(cellModel));
         }
       }
       const event: INotebookEvent = {
@@ -450,6 +399,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         session: SESSION,
         timestamp: new Date().toISOString()
       };
+
       if (USE_DEXIE) {
         await db.table('logs').add({
           eventName: NOTEBOOK_MODIFIED_EVENT,
@@ -462,8 +412,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
     }, 5000);
   }
 }
-
-var CHANGE_EVENTS: ICellData[] = [];
 
 async function logActiveCell(
   emitter: INotebookTracker,
@@ -533,10 +481,11 @@ async function logActiveCell(
   args?.model.contentChanged.connect(logDisplayChange);
 }
 
-// Part of `WIP_2`
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
   if (args) {
+
     const cellData: ICellData = toCellData(args);
+
     if (isCellModified(cellData)) {
       CHANGE_EVENTS.push(cellData);
     }
