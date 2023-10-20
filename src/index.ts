@@ -444,40 +444,7 @@ async function logActiveCell(
     });
   }
 
-  setInterval(async () => {
-    if (args?.model) {
-      const event: INotebookEvent = {
-        eventData: {
-          cell: toCellData(args?.model),
-          notebookName: parent.context.path,
-          location: window.location.toString(),
-          changeEvents: CHANGE_EVENTS
-        },
-        enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
-        eventName: CELL_MODIFIED_EVENT,
-        user: USER,
-        session: SESSION,
-        timestamp: new Date().toISOString()
-      };
-
-      // TODO: REMOVE THIS BEFORE MERGING
-      console.log('*******************************');
-      console.log('CELL_MODIFIED_EVENT', event);
-      console.log('*******************************');
-
-      if (USE_DEXIE) {
-        await db.table('logs').add({
-          eventName: CELL_MODIFIED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
-      }
-      axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
-        headers: { 'Content-Type': 'application/json' }
-      });
-    }
-    CHANGE_EVENTS = [];
-  }, 15000);
+  // connect onContentChanged listener to the cell model
   args?.model.contentChanged.connect(logDisplayChange);
 }
 
@@ -487,7 +454,31 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
     const cellData: ICellData = toCellData(args);
 
     if (isCellModified(cellData)) {
-      CHANGE_EVENTS.push(cellData);
+
+      clearTimeout(timeoutID)
+      timeoutID = setTimeout(() => {
+
+        const event: INotebookEvent = {
+          eventData: {
+            cell: cellData,
+            notebookName: NOTEBOOK_NAME,
+            location: window.location.toString(),
+            changeEvents: [cellData],
+          },
+          enumeration: ENUMERATION++,
+          notebookSession: NOTEBOOK_SESSION,
+          eventName: CELL_MODIFIED_EVENT,
+          user: USER,
+          session: SESSION,
+          timestamp: new Date().toISOString()
+        };
+
+        axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+      }, 1000); // 1 second delay
+
     }
   }
 }
