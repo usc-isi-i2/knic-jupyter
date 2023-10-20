@@ -36,6 +36,11 @@ const CELL_MODIFIED_EXECUTED_EVENT = 'CELL_MODIFIED_EXECUTED';
 const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
 
 /**
+ * timeoutID for our cell modified event
+ */
+let timeoutID: any;
+
+/**
  * Initialization data for knic-jupyter
  */
 
