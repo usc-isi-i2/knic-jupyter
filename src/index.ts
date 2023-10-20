@@ -53,6 +53,7 @@ const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT = `http://localhost:5642/knic/user/${USER}/event`;
 
 let ENUMERATION = 0;
+let NOTEBOOK_NAME: string = '';
 let NOTEBOOK_SESSION = UUID.uuid4();
 
 let ORIGINAL_CELL_DATA: any[] = [];
@@ -198,7 +199,7 @@ async function onCellExecutionBegin(
     const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
-        notebookName: parent.context.path,
+        notebookName: NOTEBOOK_NAME,
         location: window.location.toString(),
         executionCount: model.execution_count
       },
@@ -265,7 +266,7 @@ async function onCellExecutionEnded(
     const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args.cell.model),
-        notebookName: parent.context.path,
+        notebookName: NOTEBOOK_NAME,
         location: window.location.toString(),
         output: outputs,
         executionCount: model.execution_count,
@@ -336,9 +337,10 @@ async function onWidgetAdded(
   args.content.modelContentChanged.connect(onModelContentChanged);
   ENUMERATION = 0;
   NOTEBOOK_SESSION = UUID.uuid4();
+  NOTEBOOK_NAME = args.context.path;
   const event: INotebookEvent = {
     eventData: {
-      notebookName: args.context.path,
+      notebookName: NOTEBOOK_NAME,
       location: window.location.toString()
     },
     user: USER,
@@ -401,7 +403,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
 
       const event: INotebookEvent = {
         eventData: {
-          notebookName: parent.context.path,
+          notebookName: NOTEBOOK_NAME,
           location: window.location.toString(),
           cells: cells
         },
@@ -437,7 +439,7 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
       }
       const event: INotebookEvent = {
         eventData: {
-          notebookName: parent.context.path,
+          notebookName: NOTEBOOK_NAME,
           location: window.location.toString(),
           cells: cells
         },
@@ -473,7 +475,7 @@ async function logActiveCell(
     const event: INotebookEvent = {
       eventData: {
         cell: toCellData(args?.model),
-        notebookName: parent.context.path,
+        notebookName: NOTEBOOK_NAME,
         location: window.location.toString()
       },
       enumeration: ENUMERATION++,
