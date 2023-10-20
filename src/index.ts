@@ -32,7 +32,6 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
-const CELL_MODIFIED_EXECUTED_EVENT = 'CELL_MODIFIED_EXECUTED';
 const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
 
 /**
@@ -185,7 +184,6 @@ async function onCellExecutionBegin(
   emitter: any,
   args: { notebook: Notebook; cell: Cell<ICellModel> }
 ): Promise<void> {
-  const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
   if (args?.cell.model && args.cell.model.type === 'code') {
     const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
 
@@ -224,7 +222,6 @@ async function onCellExecutionEnded(
     error?: KernelError | null;
   }
 ): Promise<void> {
-  const parent: NotebookPanel = args?.notebook.parent as NotebookPanel;
   if (args?.cell.model && args.cell.model.type === 'code') {
     const model: ICodeCell = args.cell.model.toJSON() as ICodeCell;
     const errors: IErrorData[] = model.outputs
@@ -348,8 +345,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         }
       }
 
-      const parent: NotebookPanel = emitter.parent as NotebookPanel;
-
       const event: INotebookEvent = {
         eventData: {
           notebookName: NOTEBOOK_NAME,
@@ -377,7 +372,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
       clearTimeout(timeout);
     }
     timeout = setTimeout(async () => {
-      const parent: NotebookPanel = emitter.parent as NotebookPanel;
       const cells: ICellData[] = [];
       if (emitter.model?.cells) {
         for (let index = 0; index < emitter.model.cells.length; index++) {
@@ -417,8 +411,6 @@ async function logActiveCell(
   emitter: INotebookTracker,
   args: Cell<ICellModel> | null
 ): Promise<void> {
-  const parent: NotebookPanel = args?.parent?.parent as NotebookPanel;
-
   if (args?.model) {
     const event: INotebookEvent = {
       eventData: {
