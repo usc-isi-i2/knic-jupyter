@@ -18,7 +18,6 @@ import {
   NotebookPanel
 } from '@jupyterlab/notebook';
 import { UUID } from '@lumino/coreutils';
-import { Dexie } from 'dexie';
 import axios from 'axios';
 
 /**
@@ -42,11 +41,6 @@ let timeoutID: any;
 /**
  * Initialization data for knic-jupyter
  */
-
-const USE_DEXIE = new Boolean(process.env.USE_DEXIE) || false;
-
-let db: Dexie;
-
 const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
 const SERVER_ENDPOINT = `http://localhost:5642/knic/user/${USER}/event`;
@@ -133,10 +127,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
   autoStart: true,
   requires: [INotebookTracker],
   activate: (app: JupyterFrontEnd, notebookTracker: INotebookTracker) => {
-    if (USE_DEXIE) {
-      db = setupDB();
-    }
-
     // Log jupyter loaded event
     onJupyterLoaded();
 
@@ -148,16 +138,6 @@ const plugin: JupyterFrontEndPlugin<void> = {
 };
 
 let timeout: NodeJS.Timeout | undefined = undefined;
-
-function setupDB(): Dexie {
-  db = new Dexie('database');
-
-  db.version(1).stores({
-    logs: '++id, eventName, data'
-  });
-
-  return db;
-}
 
 function toCellData(cellModel: ICellModel): ICellData {
   return {
@@ -201,12 +181,6 @@ async function onCellExecutionBegin(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
-    if (USE_DEXIE) {
-      await db.table('logs').add({
-        eventName: CELL_EXECUTION_BEGIN_EVENT,
-        data: JSON.stringify(event, null, 2)
-      });
-    }
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
@@ -296,12 +270,6 @@ async function onWidgetAdded(
     timestamp: new Date().toISOString(),
     eventName: NOTEBOOK_OPENED_EVENT
   };
-  if (USE_DEXIE) {
-    await db.table('logs').add({
-      eventName: NOTEBOOK_OPENED_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
-  }
   axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
     headers: { 'Content-Type': 'application/json' }
   });
@@ -321,12 +289,6 @@ async function onJupyterLoaded(): Promise<void> {
     timestamp: new Date().toISOString(),
     eventName: JUPYTER_LOADED_EVENT
   };
-  if (USE_DEXIE) {
-    await db.table('logs').add({
-      eventName: JUPYTER_LOADED_EVENT,
-      data: JSON.stringify(event, null, 2)
-    });
-  }
   axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
     headers: { 'Content-Type': 'application/json' }
   });
@@ -358,11 +320,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         session: SESSION,
         timestamp: new Date().toISOString()
       };
-      if (USE_DEXIE)
-        await db.table('logs').add({
-          eventName: NOTEBOOK_LOADED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
       axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -393,13 +350,6 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
         session: SESSION,
         timestamp: new Date().toISOString()
       };
-
-      if (USE_DEXIE) {
-        await db.table('logs').add({
-          eventName: NOTEBOOK_MODIFIED_EVENT,
-          data: JSON.stringify(event, null, 2)
-        });
-      }
       axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
         headers: { 'Content-Type': 'application/json' }
       });
@@ -425,12 +375,6 @@ async function logActiveCell(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
-    if (USE_DEXIE) {
-      await db.table('logs').add({
-        eventName: CELL_SELECTED_EVENT,
-        data: JSON.stringify(event, null, 2)
-      });
-    }
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
