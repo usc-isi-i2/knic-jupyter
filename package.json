@@ -20,7 +20,7 @@
     "style": "style/index.css",
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/usc-isi-i2/knic-jupyter.git"
+        "url": "https://github.com/usc-isi-i2/knic-jupyter.git"
     },
     "scripts": {
         "build": "jlpm build:lib && jlpm build:labextension:dev",
