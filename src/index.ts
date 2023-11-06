@@ -363,9 +363,10 @@ async function logActiveCell(
   args: Cell<ICellModel> | null
 ): Promise<void> {
   if (args?.model) {
+    const cellData: ICellData = toCellData(args?.model);
     const event: INotebookEvent = {
       eventData: {
-        cell: toCellData(args?.model),
+        cell: cellData,
         notebookName: NOTEBOOK_NAME,
         location: window.location.toString()
       },
