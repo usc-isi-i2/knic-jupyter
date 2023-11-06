@@ -401,7 +401,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
       if ( !CELL_MODIFIED_EVENT_INTERVAL_ID ) {
 
         console.log('-----------------------------------------------')
-        console.log('setting up the interval')
+        console.log('setting up the periodic updates every 3 seconds')
         console.log('-----------------------------------------------')
 
         CELL_MODIFIED_EVENT_INTERVAL_ID = setInterval(cellData => {
