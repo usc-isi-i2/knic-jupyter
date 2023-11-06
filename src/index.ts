@@ -432,6 +432,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
 
         // clear periodic updates for the cell modified event
         clearInterval(CELL_MODIFIED_EVENT_INTERVAL_ID)
+        CELL_MODIFIED_EVENT_INTERVAL_ID = null;
 
         const event: INotebookEvent = {
           eventData: {
