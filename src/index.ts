@@ -377,13 +377,16 @@ async function logActiveCell(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
+
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
+
+    // connect onContentChanged listener to the cell model
+    args?.model.contentChanged.connect(logDisplayChange);
+
   }
 
-  // connect onContentChanged listener to the cell model
-  args?.model.contentChanged.connect(logDisplayChange);
 }
 
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
