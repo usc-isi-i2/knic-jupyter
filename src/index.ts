@@ -411,6 +411,25 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
             console.log('----------------------------------------------')
             console.log('sending out CELL_MODIFIED_EVENT every 3 seconds')
             console.log('----------------------------------------------')
+
+            const event: INotebookEvent = {
+              eventData: {
+                cell: cellData,
+                notebookName: NOTEBOOK_NAME,
+                location: window.location.toString(),
+                changeEvents: [cellData],
+              },
+              enumeration: ENUMERATION++,
+              notebookSession: NOTEBOOK_SESSION,
+              eventName: CELL_MODIFIED_EVENT,
+              user: USER,
+              session: SESSION,
+              timestamp: new Date().toISOString()
+            };
+
+            axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+              headers: { 'Content-Type': 'application/json' }
+            });
           }
 
         }, CELL_MODIFIED_EVENT_INTERVAL, cellData);
