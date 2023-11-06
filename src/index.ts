@@ -400,18 +400,10 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
       // setup periodic updates for the cell modified events
       if ( !CELL_MODIFIED_EVENT_INTERVAL_ID ) {
 
-        console.log('-----------------------------------------------')
-        console.log('setting up the periodic updates every 3 seconds')
-        console.log('-----------------------------------------------')
-
         CELL_MODIFIED_EVENT_INTERVAL_ID = setInterval(cellData => {
 
           // check if the cell was modified
           if ( isCellModified(cellData) ) {
-            console.log('----------------------------------------------')
-            console.log('sending out CELL_MODIFIED_EVENT every 3 seconds')
-            console.log('----------------------------------------------')
-
             const event: INotebookEvent = {
               eventData: {
                 cell: cellData,
@@ -440,11 +432,6 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
 
         // clear periodic updates for the cell modified event
         clearInterval(CELL_MODIFIED_EVENT_INTERVAL_ID)
-
-        console.log('----------------------------------------------')
-        console.log('user stopped typing..')
-        console.log('sending out CELL_MODIFIED_EVENT and clearing periodic updates')
-        console.log('----------------------------------------------')
 
         const event: INotebookEvent = {
           eventData: {
