@@ -31,12 +31,10 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
-const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
 
-/**
- * timeoutID for our cell modified event
- */
-let timeoutID: any;
+// CELL MODIFIED EVENT
+const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
+let CELL_MODIFIED_EVENT_TIMEOUT_ID: any;
 
 /**
  * Initialization data for knic-jupyter
@@ -391,8 +389,8 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
 
     if (isCellModified(cellData)) {
 
-      clearTimeout(timeoutID)
-      timeoutID = setTimeout(() => {
+      clearTimeout(CELL_MODIFIED_EVENT_TIMEOUT_ID)
+      CELL_MODIFIED_EVENT_TIMEOUT_ID = setTimeout(() => {
 
         const event: INotebookEvent = {
           eventData: {
