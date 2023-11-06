@@ -31,12 +31,13 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
-const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
 
-/**
- * timeoutID for our cell modified event
- */
-let timeoutID: any;
+// CELL MODIFIED EVENT
+const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
+const CELL_MODIFIED_EVENT_TIMEOUT = 1000; // 1 second
+const CELL_MODIFIED_EVENT_INTERVAL = 3000; // 3 seconds
+let CELL_MODIFIED_EVENT_INTERVAL_ID: any;
+let CELL_MODIFIED_EVENT_TIMEOUT_ID: any;
 
 /**
  * Initialization data for knic-jupyter
@@ -362,9 +363,10 @@ async function logActiveCell(
   args: Cell<ICellModel> | null
 ): Promise<void> {
   if (args?.model) {
+    const cellData: ICellData = toCellData(args?.model);
     const event: INotebookEvent = {
       eventData: {
-        cell: toCellData(args?.model),
+        cell: cellData,
         notebookName: NOTEBOOK_NAME,
         location: window.location.toString()
       },
@@ -375,13 +377,16 @@ async function logActiveCell(
       session: SESSION,
       timestamp: new Date().toISOString()
     };
+
     axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
       headers: { 'Content-Type': 'application/json' }
     });
+
+    // connect onContentChanged listener to the cell model
+    args?.model.contentChanged.connect(logDisplayChange);
+
   }
 
-  // connect onContentChanged listener to the cell model
-  args?.model.contentChanged.connect(logDisplayChange);
 }
 
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
@@ -389,10 +394,44 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
 
     const cellData: ICellData = toCellData(args);
 
+    // check if the cell was modified
     if (isCellModified(cellData)) {
 
-      clearTimeout(timeoutID)
-      timeoutID = setTimeout(() => {
+      // setup periodic updates for the cell modified events
+      if ( !CELL_MODIFIED_EVENT_INTERVAL_ID ) {
+
+        CELL_MODIFIED_EVENT_INTERVAL_ID = setInterval(cellData => {
+
+          // check if the cell was modified
+          if ( isCellModified(cellData) ) {
+            const event: INotebookEvent = {
+              eventData: {
+                cell: cellData,
+                notebookName: NOTEBOOK_NAME,
+                location: window.location.toString(),
+                changeEvents: [cellData],
+              },
+              enumeration: ENUMERATION++,
+              notebookSession: NOTEBOOK_SESSION,
+              eventName: CELL_MODIFIED_EVENT,
+              user: USER,
+              session: SESSION,
+              timestamp: new Date().toISOString()
+            };
+
+            axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+
+        }, CELL_MODIFIED_EVENT_INTERVAL, cellData);
+      }
+
+      clearTimeout(CELL_MODIFIED_EVENT_TIMEOUT_ID)
+      CELL_MODIFIED_EVENT_TIMEOUT_ID = setTimeout(() => {
+
+        // clear periodic updates for the cell modified event
+        clearInterval(CELL_MODIFIED_EVENT_INTERVAL_ID)
 
         const event: INotebookEvent = {
           eventData: {
@@ -413,7 +452,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
           headers: { 'Content-Type': 'application/json' }
         });
 
-      }, 1000); // 1 second delay
+      }, CELL_MODIFIED_EVENT_TIMEOUT);
 
     }
   }
