@@ -34,6 +34,7 @@ const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
 
 // CELL MODIFIED EVENT
 const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
+const CELL_MODIFIED_EVENT_TIMEOUT = 1000; // 1 seconds
 const CELL_MODIFIED_EVENT_INTERVAL = 5000; // seconds
 let CELL_MODIFIED_EVENT_INTERVAL_ID: any;
 let CELL_MODIFIED_EVENT_TIMEOUT_ID: any;
@@ -413,7 +414,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
           headers: { 'Content-Type': 'application/json' }
         });
 
-      }, 1000); // 1 second delay
+      }, CELL_MODIFIED_EVENT_TIMEOUT);
 
     }
   }
