@@ -15,14 +15,14 @@ DEVELOPMENT_ENDPOINT="http://localhost:5642/knic"
 # Check if the user is running Jupyter Lab in develop mode or not
 if [ "$1" = "--production" ] ; then
     echo "Running Jupyter Lab in PRODUCTION mode.."
-    sed -i "" -e "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
+    sed -i -e "s|$DEVELOPMENT_ENDPOINT|$PRODUCTION_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
     if [ -s $CHANGELOG ]; then
         cat $CHANGELOG
     fi
     echo "knic-engine endpoint = $PRODUCTION_ENDPOINT"
 else
     echo "Running Jupyter Lab in DEVELOPMENT mode.."
-    sed -i "" -e "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
+    sed -i -e "s|$PRODUCTION_ENDPOINT|$DEVELOPMENT_ENDPOINT|gw $CHANGELOG" "$SOURCE_FILE"
     if [ -s $CHANGELOG ]; then
         cat $CHANGELOG
     fi
