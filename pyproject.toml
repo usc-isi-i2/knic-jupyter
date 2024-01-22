@@ -59,6 +59,9 @@ artifacts = ["knic-jupyter/labextension"]
 [tool.hatch.build.targets.sdist]
 exclude = [".github"]
 
+[tool.hatch.build.targets.wheel]
+packages=["src"]
+
 [tool.hatch.build.hooks.jupyter-builder]
 dependencies = ["hatch-jupyter-builder>=0.5"]
 build-function = "hatch_jupyter_builder.npm_builder"
