@@ -3,20 +3,20 @@ channels:
   - conda-forge
   - defaults
 dependencies:
-  - bzip2=1.0.8=h0d85af4_4
-  - ca-certificates=2023.5.7=h8857fd0_0
-  - libffi=3.4.2=h0d85af4_5
-  - libsqlite=3.41.2=h58db7d2_1
-  - libzlib=1.2.13=hfd90126_4
-  - ncurses=6.3=h96cf925_1
-  - openssl=3.1.0=h8a1eda9_3
-  - pip=23.1.2=pyhd8ed1ab_0
-  - python=3.8.16=hf9b03c3_1_cpython
-  - readline=8.2=h9e318b2_1
-  - setuptools=67.7.2=pyhd8ed1ab_0
-  - tk=8.6.12=h5dbffcc_0
-  - wheel=0.40.0=pyhd8ed1ab_0
-  - xz=5.2.6=h775f41a_0
+  - bzip2=1.0.8
+  - ca-certificates=2023.5.7
+  - libffi=3.4.2
+  - libsqlite=3.41.2
+  - libzlib=1.2.13
+  - ncurses=6.3
+  - openssl=3.1.0
+  - pip=23.1.2
+  - python=3.8.16
+  - readline=8.2
+  - setuptools=67.7.2
+  - tk=8.6.12
+  - wheel=0.40.0
+  - xz=5.2.6
   - pip:
       - anyio==3.6.2
       - appnope==0.1.3
