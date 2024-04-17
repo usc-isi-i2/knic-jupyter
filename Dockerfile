@@ -6,7 +6,6 @@ RUN apt-get -y update \
     && rm -rf /var/lib/apt/lists/*
 
 ARG ENGINE_URL_ARG
-# TODO: Use the ENGINE_URL_ARG and inject it to index.ts before performing pip install
 
 RUN mkdir -p /lab_src/notebooks
 
