@@ -1,21 +1,22 @@
-FROM python:3.8.15
+FROM nikolaik/python-nodejs:python3.10-nodejs20-slim-canary
 
-RUN mkdir /lab
+RUN apt-get -y update \
+    && apt-get -y install gcc python3-dev \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-COPY knic-jupyter /lab/knic-jupyter
-COPY requirements.txt /lab/requirements.txt
-COPY pyproject.toml /lab/pyproject.toml
-COPY package.json /lab/package.json
-COPY setup.py /lab/setup.py
-COPY README.md /lab/README.md
+ARG ENGINE_URL_ARG
 
-COPY CHANGELOG.md /lab/CHANGELOG.md
-COPY MANIFEST.in /lab/MANIFEST.in
-COPY RELEASE.md /lab/RELEASE.md
-COPY LICENSE /lab/LICENSE
+RUN mkdir -p /lab_src/notebooks
 
-WORKDIR /lab
+COPY . /lab_src
+
+WORKDIR /lab_src
+
+ENV ENGINE_URL=$ENGINE_URL_ARG
 
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 RUN pip install -e .
+
+EXPOSE 5644
