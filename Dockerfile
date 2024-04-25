@@ -20,3 +20,5 @@ RUN pip install -r requirements.txt
 RUN pip install -e .
 
 EXPOSE 5644
+
+LABEL org.opencontainers.image.source=https://github.com/usc-isi-i2/knic-jupyter
