@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1
+
 FROM nikolaik/python-nodejs:python3.10-nodejs20-slim-canary
 
 RUN apt-get -y update \
