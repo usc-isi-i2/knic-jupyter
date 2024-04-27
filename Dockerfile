@@ -1,25 +1,39 @@
 # syntax=docker/dockerfile:1
 
-FROM nikolaik/python-nodejs:python3.10-nodejs20-slim
+FROM python:3.10.14-slim-bookworm
 
 RUN apt-get -y update \
-    && apt-get -y install gcc python3-dev \
+    && apt-get --no-install-recommends -y install gcc=4:12.2.0-3 python3-dev=3.11.2-1+b1 \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-ARG ENGINE_URL_ARG
-
 RUN mkdir -p /lab_src/notebooks
-
-COPY . /lab_src
 
 WORKDIR /lab_src
 
-ENV ENGINE_URL=$ENGINE_URL_ARG
+COPY requirements.txt .
 
-RUN pip install --upgrade pip
-RUN pip install -r requirements.txt
-RUN pip install -e .
+RUN pip install --no-cache-dir --upgrade pip==24.0 \
+    && pip install --no-cache-dir -r requirements.txt
+
+COPY --from=node:20.12.2-bookworm-slim / /
+
+COPY *.config.js .
+COPY *.md .
+COPY LICENSE .
+COPY MANIFEST.in .
+COPY config.py .
+COPY install.json .
+COPY package.json .
+COPY pyproject.toml .
+COPY setup.py .
+COPY src/ src/
+COPY style/ style/
+COPY tsconfig.json .
+COPY ui-tests/ ui-tests/
+COPY yarn.lock .
+
+RUN pip install --no-cache-dir .
 
 EXPOSE 5644
 
