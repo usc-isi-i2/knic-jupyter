@@ -9,7 +9,6 @@ config.ServerApp.allow_origin = '*' # Allow requests from any origin (insecure)
 config.ServerApp.disable_check_xsrf = True # Disable XSRF checking in jupyter lab
 config.ServerApp.tornado_settings = {
     'headers': {
-        'X-Frame-Options': 'ALLOW_FROM https://knic.isi.edu',
         'Content-Security-Policy': "frame-ancestors 'self' http://localhost:5641 http://localhost:3000 https://knic.isi.edu",
     }
 }
