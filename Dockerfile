@@ -22,7 +22,6 @@ COPY *.config.js .
 COPY *.md .
 COPY LICENSE .
 COPY MANIFEST.in .
-COPY config.py .
 COPY install.json .
 COPY package.json .
 COPY pyproject.toml .
@@ -34,6 +33,8 @@ COPY ui-tests/ ui-tests/
 COPY yarn.lock .
 
 RUN pip install --no-cache-dir .
+
+COPY config.py .
 
 EXPOSE 5644
 
