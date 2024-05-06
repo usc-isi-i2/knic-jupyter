@@ -1,8 +1,6 @@
 import os
 import urllib.parse
 
-from notebook.services.config import ConfigManager
-
 config = get_config()
 
 knic_companion_url = os.getenv('KNIC_COMPANION', 'http://localhost:5641')
