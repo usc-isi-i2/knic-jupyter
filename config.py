@@ -17,3 +17,7 @@ config.ServerApp.tornado_settings = {
         'Content-Security-Policy': f"frame-ancestors 'self' {knic_companion_origin}",
     }
 }
+
+# Set base URL for JupyterLab
+config.NotebookApp.base_url = "/jupyter"
+config.NotebookApp.default_url = "/jupyter"
