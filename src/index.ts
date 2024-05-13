@@ -44,7 +44,8 @@ let CELL_MODIFIED_EVENT_TIMEOUT_ID: any;
  */
 const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
-const SERVER_ENDPOINT = `http://localhost:5642/knic/user/${USER}/event`;
+const ENGINE_URL = new URLSearchParams(window.location.search).get('engineurl');
+const SERVER_ENDPOINT = `${ENGINE_URL}/user/${USER}/event`;
 
 let ENUMERATION = 0;
 let NOTEBOOK_NAME: string = '';
