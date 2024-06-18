@@ -31,6 +31,7 @@ const CELL_SELECTED_EVENT = 'CELL_SELECTED';
 const NOTEBOOK_MODIFIED_EVENT = 'NOTEBOOK_MODIFIED';
 const CELL_EXECUTION_BEGIN_EVENT = 'CELL_EXECUTION_BEGIN';
 const CELL_EXECUTED_END_EVENT = 'CELL_EXECUTION_END';
+const CURRENT_ACTIVE_NOTEBOOK = 'CURRENT_ACTIVE_NOTEBOOK';
 
 // CELL MODIFIED EVENT
 const CELL_MODIFIED_EVENT = 'CELL_MODIFIED';
@@ -134,6 +135,7 @@ const plugin: JupyterFrontEndPlugin<void> = {
 
     notebookTracker.widgetAdded.connect(onWidgetAdded, this);
     notebookTracker.activeCellChanged.connect(logActiveCell, this);
+    notebookTracker.currentChanged.connect(logCurrentActiveNotebook, this);
     NotebookActions.executed.connect(onCellExecutionEnded, this);
     NotebookActions.executionScheduled.connect(onCellExecutionBegin, this);
   }
@@ -359,6 +361,29 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
   }
 }
 
+async function logCurrentActiveNotebook(
+  emitter: INotebookTracker,
+  args: NotebookPanel | null
+): Promise<void> {
+  NOTEBOOK_SESSION = UUID.uuid4();
+  NOTEBOOK_NAME = args?.context.path ? args?.context.path : '';
+  const event: INotebookEvent = {
+    eventData: {
+      notebookName: NOTEBOOK_NAME,
+      location: window.location.toString()
+    },
+    user: USER,
+    session: SESSION,
+    enumeration: ENUMERATION++,
+    notebookSession: NOTEBOOK_SESSION,
+    timestamp: new Date().toISOString(),
+    eventName: CURRENT_ACTIVE_NOTEBOOK
+  };
+  axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+    headers: { 'Content-Type': 'application/json' }
+  });
+}
+
 async function logActiveCell(
   emitter: INotebookTracker,
   args: Cell<ICellModel> | null
@@ -385,54 +410,50 @@ async function logActiveCell(
 
     // connect onContentChanged listener to the cell model
     args?.model.contentChanged.connect(logDisplayChange);
-
   }
-
 }
 
 async function logDisplayChange(args: ICellModel | null): Promise<void> {
   if (args) {
-
     const cellData: ICellData = toCellData(args);
 
     // check if the cell was modified
     if (isCellModified(cellData)) {
-
       // setup periodic updates for the cell modified events
-      if ( !CELL_MODIFIED_EVENT_INTERVAL_ID ) {
+      if (!CELL_MODIFIED_EVENT_INTERVAL_ID) {
+        CELL_MODIFIED_EVENT_INTERVAL_ID = setInterval(
+          cellData => {
+            // check if the cell was modified
+            if (isCellModified(cellData)) {
+              const event: INotebookEvent = {
+                eventData: {
+                  cell: cellData,
+                  notebookName: NOTEBOOK_NAME,
+                  location: window.location.toString(),
+                  changeEvents: [cellData]
+                },
+                enumeration: ENUMERATION++,
+                notebookSession: NOTEBOOK_SESSION,
+                eventName: CELL_MODIFIED_EVENT,
+                user: USER,
+                session: SESSION,
+                timestamp: new Date().toISOString()
+              };
 
-        CELL_MODIFIED_EVENT_INTERVAL_ID = setInterval(cellData => {
-
-          // check if the cell was modified
-          if ( isCellModified(cellData) ) {
-            const event: INotebookEvent = {
-              eventData: {
-                cell: cellData,
-                notebookName: NOTEBOOK_NAME,
-                location: window.location.toString(),
-                changeEvents: [cellData],
-              },
-              enumeration: ENUMERATION++,
-              notebookSession: NOTEBOOK_SESSION,
-              eventName: CELL_MODIFIED_EVENT,
-              user: USER,
-              session: SESSION,
-              timestamp: new Date().toISOString()
-            };
-
-            axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
-              headers: { 'Content-Type': 'application/json' }
-            });
-          }
-
-        }, CELL_MODIFIED_EVENT_INTERVAL, cellData);
+              axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
+                headers: { 'Content-Type': 'application/json' }
+              });
+            }
+          },
+          CELL_MODIFIED_EVENT_INTERVAL,
+          cellData
+        );
       }
 
-      clearTimeout(CELL_MODIFIED_EVENT_TIMEOUT_ID)
+      clearTimeout(CELL_MODIFIED_EVENT_TIMEOUT_ID);
       CELL_MODIFIED_EVENT_TIMEOUT_ID = setTimeout(() => {
-
         // clear periodic updates for the cell modified event
-        clearInterval(CELL_MODIFIED_EVENT_INTERVAL_ID)
+        clearInterval(CELL_MODIFIED_EVENT_INTERVAL_ID);
         CELL_MODIFIED_EVENT_INTERVAL_ID = null;
 
         const event: INotebookEvent = {
@@ -440,7 +461,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
             cell: cellData,
             notebookName: NOTEBOOK_NAME,
             location: window.location.toString(),
-            changeEvents: [cellData],
+            changeEvents: [cellData]
           },
           enumeration: ENUMERATION++,
           notebookSession: NOTEBOOK_SESSION,
@@ -453,9 +474,7 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
         axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
           headers: { 'Content-Type': 'application/json' }
         });
-
       }, CELL_MODIFIED_EVENT_TIMEOUT);
-
     }
   }
 }
