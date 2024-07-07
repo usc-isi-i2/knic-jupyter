@@ -45,12 +45,15 @@ let CELL_MODIFIED_EVENT_TIMEOUT_ID: any;
  */
 const USER = new URLSearchParams(window.location.search).get('userid');
 const SESSION = new URLSearchParams(window.location.search).get('sessionid');
+const TECHNICAL_AREA = new URLSearchParams(window.location.search).get(
+  'technicalarea'
+);
 const ENGINE_URL = new URLSearchParams(window.location.search).get('engineurl');
 const SERVER_ENDPOINT = `${ENGINE_URL}/user/${USER}/event`;
 
 let ENUMERATION = 0;
 let NOTEBOOK_NAME: string = '';
-let NOTEBOOK_SESSION = UUID.uuid4();
+let NOTEBOOK_SESSIONS: Record<string, string> = {};
 
 let ORIGINAL_CELL_DATA: any[] = [];
 
@@ -112,7 +115,8 @@ interface INotebookEvent {
   timestamp: string;
   eventName: string;
   enumeration: number;
-  notebookSession: string;
+  technicalArea: string | null;
+  notebookSession: string | null;
   eventData:
     | IEventData
     | IJupyterLoaded
@@ -179,7 +183,8 @@ async function onCellExecutionBegin(
         executionCount: model.execution_count
       },
       enumeration: ENUMERATION++,
-      notebookSession: NOTEBOOK_SESSION,
+      technicalArea: TECHNICAL_AREA,
+      notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
       eventName: CELL_EXECUTION_BEGIN_EVENT,
       user: USER,
       session: SESSION,
@@ -240,7 +245,8 @@ async function onCellExecutionEnded(
         errors: errors
       },
       enumeration: ENUMERATION++,
-      notebookSession: NOTEBOOK_SESSION,
+      notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+      technicalArea: TECHNICAL_AREA,
       eventName: CELL_EXECUTED_END_EVENT,
       session: SESSION,
       user: USER,
@@ -260,8 +266,8 @@ async function onWidgetAdded(
   notebookJustOpened = true;
   args.content.modelContentChanged.connect(onModelContentChanged);
   ENUMERATION = 0;
-  NOTEBOOK_SESSION = UUID.uuid4();
   NOTEBOOK_NAME = args.context.path;
+  NOTEBOOK_SESSIONS[NOTEBOOK_NAME] = UUID.uuid4();
   const event: INotebookEvent = {
     eventData: {
       notebookName: NOTEBOOK_NAME,
@@ -270,7 +276,8 @@ async function onWidgetAdded(
     user: USER,
     session: SESSION,
     enumeration: ENUMERATION++,
-    notebookSession: NOTEBOOK_SESSION,
+    technicalArea: TECHNICAL_AREA,
+    notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
     timestamp: new Date().toISOString(),
     eventName: NOTEBOOK_OPENED_EVENT
   };
@@ -281,7 +288,6 @@ async function onWidgetAdded(
 
 async function onJupyterLoaded(): Promise<void> {
   ENUMERATION = 0;
-  NOTEBOOK_SESSION = UUID.uuid4();
   const event: INotebookEvent = {
     eventData: {
       location: window.location.toString()
@@ -289,7 +295,8 @@ async function onJupyterLoaded(): Promise<void> {
     user: USER,
     session: SESSION,
     enumeration: ENUMERATION++,
-    notebookSession: NOTEBOOK_SESSION,
+    technicalArea: TECHNICAL_AREA,
+    notebookSession: null,
     timestamp: new Date().toISOString(),
     eventName: JUPYTER_LOADED_EVENT
   };
@@ -318,7 +325,8 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
           cells: cells
         },
         enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
+        notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+        technicalArea: TECHNICAL_AREA,
         eventName: NOTEBOOK_LOADED_EVENT,
         user: USER,
         session: SESSION,
@@ -348,7 +356,8 @@ async function onModelContentChanged(emitter: Notebook): Promise<void> {
           cells: cells
         },
         enumeration: ENUMERATION++,
-        notebookSession: NOTEBOOK_SESSION,
+        notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+        technicalArea: TECHNICAL_AREA,
         eventName: NOTEBOOK_MODIFIED_EVENT,
         user: USER,
         session: SESSION,
@@ -365,7 +374,6 @@ async function logCurrentActiveNotebook(
   emitter: INotebookTracker,
   args: NotebookPanel | null
 ): Promise<void> {
-  NOTEBOOK_SESSION = UUID.uuid4();
   NOTEBOOK_NAME = args?.context.path ? args?.context.path : '';
   const event: INotebookEvent = {
     eventData: {
@@ -375,10 +383,12 @@ async function logCurrentActiveNotebook(
     user: USER,
     session: SESSION,
     enumeration: ENUMERATION++,
-    notebookSession: NOTEBOOK_SESSION,
+    technicalArea: TECHNICAL_AREA,
+    notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
     timestamp: new Date().toISOString(),
     eventName: CURRENT_ACTIVE_NOTEBOOK
   };
+  console.log(JSON.stringify(event));
   axios.post(SERVER_ENDPOINT, encodeURI(JSON.stringify(event)), {
     headers: { 'Content-Type': 'application/json' }
   });
@@ -397,7 +407,8 @@ async function logActiveCell(
         location: window.location.toString()
       },
       enumeration: ENUMERATION++,
-      notebookSession: NOTEBOOK_SESSION,
+      notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+      technicalArea: TECHNICAL_AREA,
       eventName: CELL_SELECTED_EVENT,
       user: USER,
       session: SESSION,
@@ -433,7 +444,8 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
                   changeEvents: [cellData]
                 },
                 enumeration: ENUMERATION++,
-                notebookSession: NOTEBOOK_SESSION,
+                notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+                technicalArea: TECHNICAL_AREA,
                 eventName: CELL_MODIFIED_EVENT,
                 user: USER,
                 session: SESSION,
@@ -464,7 +476,8 @@ async function logDisplayChange(args: ICellModel | null): Promise<void> {
             changeEvents: [cellData]
           },
           enumeration: ENUMERATION++,
-          notebookSession: NOTEBOOK_SESSION,
+          notebookSession: NOTEBOOK_SESSIONS[NOTEBOOK_NAME] || null,
+          technicalArea: TECHNICAL_AREA,
           eventName: CELL_MODIFIED_EVENT,
           user: USER,
           session: SESSION,
